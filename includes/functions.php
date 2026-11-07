@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-function h($value): string {
+function h(mixed $value): string {
     return htmlspecialchars(
         (string)($value ?? ''),
         ENT_QUOTES | ENT_SUBSTITUTE,
