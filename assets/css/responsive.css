@@ -1,0 +1,18 @@
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+    }
+
+    .navbar {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .sidebar {
+        flex-direction: column;
+    }
+
+    .panel {
+        padding: 20px;
+    }
+}
