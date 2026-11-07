@@ -1,6 +1,6 @@
 <?php
 const APP_NAME = 'Tuition Attendance Management';
-const BASE_URL = '/MP_Assignment_Code';
+const BASE_URL = '';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
