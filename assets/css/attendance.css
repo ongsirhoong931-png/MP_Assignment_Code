@@ -1,0 +1,262 @@
+
+/* =========================================
+   EDUVEX ACADEMY ATTENDANCE SYSTEM
+   ========================================= */
+
+.att-page {
+    max-width: 1180px;
+    margin: 25px auto;
+    color: #F5F3FF;
+}
+
+.att-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.att-page h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+    color: #F5F3FF;
+}
+
+.att-page h2 {
+    margin: 0 0 12px;
+    font-size: 21px;
+    color: #F5F3FF;
+}
+
+.att-page p {
+    color: #B0ACC3;
+}
+
+.att-kicker {
+    color: #B4A0F7 !important;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.att-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.att-card {
+    background: #211F2D;
+    border: 1px solid #39344E;
+    border-radius: 16px;
+    padding: 26px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.att-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.att-status {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: bold;
+    background: #39344E;
+    color: #CFC7DF;
+}
+
+.att-status.open {
+    background: #164C3A;
+    color: #86EFAC;
+}
+
+.att-status.closed {
+    background: #512B35;
+    color: #FDA4AF;
+}
+
+.att-status.draft {
+    background: #453D61;
+    color: #C4B5FD;
+}
+
+.att-code-box {
+    background: #171621;
+    border: 1px solid #51476C;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.att-code-box span {
+    display: block;
+    font-size: 12px;
+    color: #B0ACC3;
+    margin-bottom: 8px;
+}
+
+.att-code-box strong {
+    display: block;
+    font-size: clamp(30px, 5vw, 44px);
+    letter-spacing: 7px;
+    color: #C4B5FD;
+    font-variant-numeric: tabular-nums;
+}
+
+.att-qr {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    min-height: 190px;
+    margin: 20px auto;
+    padding: 12px;
+    border-radius: 12px;
+    background: #FFFFFF;
+}
+
+.att-qr img,
+.att-qr canvas {
+    max-width: 100%;
+}
+
+.att-small {
+    font-size: 13px;
+    color: #A8A2BB;
+}
+
+.att-center {
+    text-align: center;
+}
+
+.att-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.att-page button {
+    background: #7965C5;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 9px;
+    padding: 12px 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.att-page button:hover:not(:disabled) {
+    background: #927CDB;
+}
+
+.att-page button:disabled {
+    background: #39344E;
+    color: #8C869F;
+    cursor: not-allowed;
+}
+
+.att-page button.att-danger {
+    background: #9B3B52;
+}
+
+.att-page button.att-danger:hover {
+    background: #B74B65;
+}
+
+.att-link {
+    display: inline-block;
+    margin-top: 15px;
+    color: #C4B5FD;
+    font-weight: 600;
+}
+
+.att-link:hover {
+    color: #E0D7FF;
+}
+
+.att-alert {
+    padding: 15px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.att-success {
+    background: #164C3A;
+    color: #A7F3D0;
+}
+
+.att-error {
+    background: #512B35;
+    color: #FECDD3;
+}
+
+.att-student {
+    max-width: 620px;
+}
+
+.att-page label {
+    display: block;
+    margin: 16px 0 8px;
+    font-weight: 600;
+}
+
+.att-page input,
+.att-page select {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #292638;
+    border: 1px solid #514B64;
+    border-radius: 9px;
+    color: #F5F3FF;
+    margin-bottom: 18px;
+}
+
+.att-page input:focus,
+.att-page select:focus {
+    outline: 2px solid #B4A0F7;
+    outline-offset: 1px;
+}
+
+.att-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.att-table th,
+.att-table td {
+    padding: 13px;
+    border-bottom: 1px solid #39344E;
+    text-align: left;
+}
+
+.att-table th {
+    background: #292638;
+    color: #E2D9FF;
+}
+
+.att-table td {
+    color: #D5D0E2;
+}
+
+@media (max-width: 800px) {
+    .att-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .att-card {
+        padding: 18px;
+    }
+
+    .att-page h1 {
+        font-size: 26px;
+    }
+}

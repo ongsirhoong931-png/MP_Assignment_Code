@@ -1,10 +1,13 @@
+
 <?php
 require_once __DIR__ . '/functions.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
@@ -21,7 +24,15 @@ require_once __DIR__ . '/functions.php';
 </head>
 
 <body>
+
 <?php require __DIR__ . '/navbar.php'; ?>
 
-<main class="container">
-    <?php show_notice(); ?>
+<?php require __DIR__ . '/floating_nav.php'; ?>
+
+<main class="container app-content">
+
+<?php
+if (function_exists('show_notice')) {
+    show_notice();
+}
+?>

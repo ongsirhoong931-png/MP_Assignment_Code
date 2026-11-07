@@ -1,10 +1,14 @@
+
 </main>
 
-<footer class="container">
-    <small>Tuition Attendance Management System</small>
+<footer class="site-footer">
+    Tuition Attendance Management System
 </footer>
 
-<script src="<?= h(url('assets/js/main.js')) ?>"></script>
+<script
+    src="<?= h(url('assets/js/main.js')) ?>"
+    defer>
+</script>
 
 </body>
 </html>
