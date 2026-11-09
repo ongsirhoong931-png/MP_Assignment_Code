@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../includes/attendance_functions.php';
 
@@ -13,35 +12,22 @@ att_require_role('student');
 
 $pageTitle = 'Mark Attendance';
 
+// Retrieve the correct student_id string (e.g. STU002) for this user account
+$studentId = att_student_id();
+if (empty($studentId)) {
+    // Fallback: fetch student_id from user_accounts if session helper is blank
+    $stmtAcc = $pdo->prepare("SELECT student_id FROM user_accounts WHERE user_id = ? LIMIT 1");
+    $stmtAcc->execute([att_user_id()]);
+    $studentId = (string) ($stmtAcc->fetchColumn() ?: '');
+}
+
 $sessionId = filter_input(
     INPUT_GET,
     'session_id',
     FILTER_VALIDATE_INT
 );
 
-$token = $_GET['token'] ?? '';
-
-$qrSession = null;
-
-if ($sessionId && is_string($token)) {
-
-    $qrSession = att_student_session(
-        $pdo,
-        $sessionId,
-        att_user_id()
-    );
-
-    if (
-        !$qrSession ||
-        !hash_equals(
-            att_qr_token($qrSession),
-            $token
-        )
-    ) {
-        $qrSession = null;
-    }
-}
-
+// Fetches only OPEN sessions for classes the student is enrolled in
 $stmt = $pdo->prepare("
     SELECT s.session_id, s.status,
            l.starts_at, l.ends_at,
@@ -53,12 +39,13 @@ $stmt = $pdo->prepare("
     JOIN student_enrolments e
         ON e.class_id = l.class_id
     WHERE e.student_id = ?
+      AND s.status = 'open'
       AND l.starts_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)
       AND l.starts_at < DATE_ADD(NOW(), INTERVAL 7 DAY)
     ORDER BY l.starts_at
 ");
 
-$stmt->execute([att_user_id()]);
+$stmt->execute([$studentId]);
 $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 require __DIR__ . '/../includes/header.php';
@@ -74,53 +61,10 @@ require __DIR__ . '/../includes/header.php';
     <h1>Mark Attendance</h1>
 
     <p>
-        Enter your teacher's six-digit code
-        or scan the attendance QR code.
+        Enter your teacher's six-digit code to mark your attendance.
     </p>
 
     <?php att_flash(); ?>
-
-    <?php if ($qrSession): ?>
-
-        <div class="att-card">
-
-            <h2>QR Attendance</h2>
-
-            <p>
-                Class:
-                <?= h($qrSession['grade_level']) ?>
-                -
-                <?= h($qrSession['section']) ?>
-            </p>
-
-            <form method="post"
-                  action="<?= h(url('student/submit_attendance.php')) ?>">
-
-                <input type="hidden"
-                       name="csrf"
-                       value="<?= h(att_csrf()) ?>">
-
-                <input type="hidden"
-                       name="session_id"
-                       value="<?= (int) $qrSession['session_id'] ?>">
-
-                <input type="hidden"
-                       name="method"
-                       value="qr">
-
-                <input type="hidden"
-                       name="token"
-                       value="<?= h($token) ?>">
-
-                <button type="submit">
-                    Confirm Attendance
-                </button>
-
-            </form>
-
-        </div>
-
-    <?php endif; ?>
 
     <div class="att-card">
 

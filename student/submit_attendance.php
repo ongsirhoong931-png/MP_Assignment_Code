@@ -1,6 +1,4 @@
-
 <?php
-
 require_once __DIR__ . '/../includes/attendance_functions.php';
 
 att_require_role('student');
@@ -12,7 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 att_check_csrf();
 
-$studentId = att_user_id();
+// Retrieve the correct student_id string (e.g. STU002) for this user account
+$studentId = att_student_id();
+if (empty($studentId)) {
+    $stmtAcc = $pdo->prepare("SELECT student_id FROM user_accounts WHERE user_id = ? LIMIT 1");
+    $stmtAcc->execute([att_user_id()]);
+    $studentId = (string) ($stmtAcc->fetchColumn() ?: '');
+}
 
 $sessionId = filter_input(
     INPUT_POST,
@@ -20,15 +24,9 @@ $sessionId = filter_input(
     FILTER_VALIDATE_INT
 );
 
-$method = $_POST['method'] ?? '';
-
 try {
 
-    if (!$sessionId || !in_array(
-        $method,
-        ['code', 'qr'],
-        true
-    )) {
+    if (!$sessionId) {
         throw new RuntimeException('Invalid attendance request.');
     }
 
@@ -45,63 +43,45 @@ try {
         );
     }
 
-    // Validate code or QR token.
-    if ($method === 'code') {
+    $code = $_POST['attendance_code'] ?? '';
 
-        $code = $_POST['attendance_code'] ?? '';
+    if (!is_string($code) ||
+        !preg_match('/^[0-9]{6}$/D', $code)) {
+        throw new RuntimeException(
+            'Please enter a valid six-digit code.'
+        );
+    }
 
-        if (!is_string($code) ||
-            !preg_match('/^[0-9]{6}$/D', $code)) {
-            throw new RuntimeException(
-                'Please enter a valid six-digit code.'
-            );
-        }
+    // Allow no more than 5 code attempts per 15 minutes.
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM attendance_attempts
+        WHERE student_id = ?
+          AND attempted_at >= DATE_SUB(
+              NOW(), INTERVAL 15 MINUTE
+          )
+    ");
 
-        // Allow no more than 5 code attempts per 15 minutes.
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*)
-            FROM attendance_attempts
-            WHERE student_id = ?
-              AND attempted_at >= DATE_SUB(
-                  NOW(), INTERVAL 15 MINUTE
-              )
-        ");
+    $stmt->execute([$studentId]);
 
-        $stmt->execute([$studentId]);
+    if ((int) $stmt->fetchColumn() >= 5) {
+        throw new RuntimeException(
+            'Too many attempts. Please try again later.'
+        );
+    }
 
-        if ((int) $stmt->fetchColumn() >= 5) {
-            throw new RuntimeException(
-                'Too many attempts. Please try again later.'
-            );
-        }
+    // Record the attempt before checking the code.
+    $stmt = $pdo->prepare("
+        INSERT INTO attendance_attempts (student_id, session_id, attendance_method)
+        VALUES (?, ?, 'code')
+    ");
 
-        // Record the attempt before checking the code.
-        $stmt = $pdo->prepare("
-            INSERT INTO attendance_attempts (student_id)
-            VALUES (?)
-        ");
+    $stmt->execute([$studentId, $sessionId]);
 
-        $stmt->execute([$studentId]);
-
-        if (!hash_equals(att_code($session), $code)) {
-            throw new RuntimeException(
-                'Incorrect attendance code.'
-            );
-        }
-
-    } else {
-
-        $token = $_POST['token'] ?? '';
-
-        if (
-            !is_string($token) ||
-            !preg_match('/^[a-f0-9]{64}$/D', $token) ||
-            !hash_equals(att_qr_token($session), $token)
-        ) {
-            throw new RuntimeException(
-                'Invalid attendance QR code.'
-            );
-        }
+    if (!hash_equals(att_code($session), $code)) {
+        throw new RuntimeException(
+            'Incorrect attendance code.'
+        );
     }
 
     $pdo->beginTransaction();
@@ -131,22 +111,21 @@ try {
         );
     }
 
-    // Database unique key prevents duplicates.
+    // Insert into attendance_submissions (or attendance_records based on your schema setup)
     $stmt = $pdo->prepare("
-        INSERT INTO attendance_records
+        INSERT INTO attendance_submissions
             (
                 session_id,
                 student_id,
                 attendance_status,
                 attendance_method
             )
-        VALUES (?, ?, 'present', ?)
+        VALUES (?, ?, 'Present', 'code')
     ");
 
     $stmt->execute([
         $sessionId,
-        $studentId,
-        $method
+        $studentId
     ]);
 
     $pdo->commit();

@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../includes/attendance_functions.php';
 
@@ -25,6 +24,57 @@ if ($staffId === '') {
     $staffId = (string) ($stmt->fetchColumn() ?: '');
 }
 
+// ==========================================
+// AUTO-GENERATE TODAY'S LESSONS IF MISSING
+// ==========================================
+if ($staffId !== '') {
+    $currentDate = date('Y-m-d');
+    $currentDayOfWeek = date('l'); 
+
+    try {
+        $stmtSchedules = $pdo->prepare("
+            SELECT schedule_id, class_id, assigned_staff_id, start_time, end_time 
+            FROM timetable_schedules 
+            WHERE assigned_staff_id = ? AND day_of_week = ?
+        ");
+        $stmtSchedules->execute([$staffId, $currentDayOfWeek]);
+        $todaysSchedules = $stmtSchedules->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($todaysSchedules as $schedule) {
+            $scheduleId = $schedule['schedule_id'];
+            $classId = $schedule['class_id'];
+            $teacherId = $schedule['assigned_staff_id'];
+            $startsAt = $currentDate . ' ' . $schedule['start_time'];
+            $endsAt = $currentDate . ' ' . $schedule['end_time'];
+
+            $checkLesson = $pdo->prepare("
+                SELECT lesson_id FROM attendance_lessons 
+                WHERE schedule_id = ? AND lesson_date = ?
+            ");
+            $checkLesson->execute([$scheduleId, $currentDate]);
+
+            if ($checkLesson->rowCount() === 0) {
+                $insertLesson = $pdo->prepare("
+                    INSERT INTO attendance_lessons 
+                    (schedule_id, class_id, teacher_id, lesson_date, starts_at, ends_at, topic) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+                $insertLesson->execute([
+                    $scheduleId,
+                    $classId,
+                    $teacherId,
+                    $currentDate,
+                    $startsAt,
+                    $endsAt,
+                    'Regular Class Session'
+                ]);
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Auto-generation of lessons error: " . $e->getMessage());
+    }
+}
+
 $lessons = [];
 
 if ($staffId !== '') {
@@ -34,10 +84,13 @@ if ($staffId !== '') {
             c.grade_level,
             c.section,
             s.session_id,
-            s.code_nonce,
+            s.attendance_code,
             s.status
-
         FROM attendance_lessons l
+
+        -- Ensure it instantly disappears if deleted from timetable schedules
+        INNER JOIN timetable_schedules t
+            ON t.schedule_id = l.schedule_id
 
         INNER JOIN classes c
             ON c.class_id = l.class_id
@@ -46,21 +99,14 @@ if ($staffId !== '') {
             ON s.lesson_id = l.lesson_id
 
         WHERE l.teacher_id = ?
-
-          AND l.starts_at >= DATE_SUB(
-              NOW(),
-              INTERVAL 1 DAY
-          )
-
-          AND l.starts_at < DATE_ADD(
-              NOW(),
-              INTERVAL 30 DAY
-          )
+          AND t.assigned_staff_id = ?
+          -- Automatically hide classes once their class end time + 2 hour window has passed
+          AND TIMESTAMPADD(HOUR, 2, l.ends_at) >= NOW()
 
         ORDER BY l.starts_at ASC
     ");
 
-    $stmt->execute([$staffId]);
+    $stmt->execute([$staffId, $staffId]);
 
     $lessons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
@@ -155,23 +201,6 @@ require __DIR__ . '/../includes/header.php';
                         </strong>
                     </div>
 
-                    <div
-                        class="att-qr"
-                        data-qr-url="<?= h(
-                            url(
-                                'student/attendance.php?session_id='
-                                . (int) $sessionId
-                                . '&token='
-                                . att_qr_token($lesson)
-                            )
-                        ) ?>">
-                    </div>
-
-                    <p class="att-small att-center">
-                        Scan QR or enter the code.
-                        Both use this same session.
-                    </p>
-
                 <?php endif; ?>
 
                 <form method="post"
@@ -195,7 +224,7 @@ require __DIR__ . '/../includes/header.php';
                             name="action"
                             value="generate"
                             <?= !$allowed ? 'disabled' : '' ?>>
-                            Generate Code + QR
+                            Generate Code
                         </button>
 
                     <?php elseif ($status !== 'open'): ?>
@@ -253,11 +282,6 @@ require __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 
 </div>
-
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
-    defer>
-</script>
 
 <script
     src="<?= h(url('assets/js/attendance.js')) ?>"

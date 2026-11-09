@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/includes/functions.php';
 
@@ -22,18 +21,16 @@ require __DIR__ . '/includes/header.php';
     <div class="hero-copy">
 
         <div class="eyebrow">
-            ✦ YOUR DIGITAL LEARNING SPACE
+            INNOVATIVE LEARNING WITH EDUVEX ACADEMY
         </div>
 
         <h1>
-            Education,<br>
-            <span>Simplified.</span>
+            Smarter Learning,<br>
+            <span>Effortless Management.</span>
         </h1>
 
         <p>
-            One connected platform for administrators,
-            tutors and students. Manage classes,
-            attendance and learning with confidence.
+            Empowering administrators, tutors, and students on a single platform. Take full control of classes, schedules, and learning materials with confidence.
         </p>
 
         <div class="hero-actions">
@@ -54,33 +51,63 @@ require __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- SYSTEM PREVIEW -->
+    <!-- SYSTEM PREVIEW () -->
     <div class="hero-preview">
 
         <div class="preview-title">
             <span class="status-dot"></span>
-            Your Workspace
+            
         </div>
 
-        <div class="preview-item">
+        <!-- Dynamic Profile Link based on Role -->
+        <?php if ($role === 'admin'): ?>
+            <a href="<?= h(url('admin/profile.php')) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
+                <span></span>
+                Admin Profile
+            </a>
+        <?php elseif ($role === 'staff'): ?>
+            <a href="<?= h(url('tutor/profile.php')) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
+                <span>👤</span>
+                Tutor Profile
+            </a>
+        <?php elseif ($role === 'student'): ?>
+            <a href="<?= h(url('student_management/view_student.php?id=' . urlencode(me()['student_id'] ?? ''))) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
+                <span></span>
+                Student Profile
+            </a>
+        <?php endif; ?>
+
+        <!-- 1. Student Management Link -->
+        <a href="<?= h(url('student_management/index.php')) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
             <span>♙</span>
             Student Management
-        </div>
+        </a>
 
-        <div class="preview-item">
+        <!-- 2. Tutor Management Link (Admin Only) -->
+        <?php if ($role === 'admin'): ?>
+            <a href="<?= h(url('tutor_management/index.php')) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
+                <span>🗂</span>
+                Tutor Management
+            </a>
+        <?php endif; ?>
+
+        <!-- 3. Class Management Link -->
+        <a href="<?= h(url('class_management/index.php')) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
             <span>▤</span>
             Class Management
-        </div>
+        </a>
 
-        <div class="preview-item">
+        <!-- 4. Attendance Tracking Link (Role Differentiated) -->
+        <a href="<?= h(url($role === 'admin' ? 'admin/attendance.php' : ($role === 'staff' ? 'tutor/attendance.php' : 'student/attendance.php'))) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
             <span>▦</span>
-            Attendance Tracking
-        </div>
+            <?= $role === 'admin' ? 'Attendance Overview' : ($role === 'staff' ? 'Attendance Management' : 'Mark Attendance') ?>
+        </a>
 
-        <div class="preview-item">
+        <!-- 5. Timetable Management Link -->
+        <a href="<?= h(url('class_management/timetable.php')) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
             <span>◷</span>
             Timetable Management
-        </div>
+        </a>
 
     </div>
 
@@ -97,59 +124,91 @@ require __DIR__ . '/includes/header.php';
 
     <div class="feature-grid">
 
-        <article class="feature-card">
-            <span class="feature-symbol">♙</span>
-            <h3>Students</h3>
-            <p>
-                Manage student profiles
-                and enrolments.
-            </p>
-        </article>
+        <!-- 1. Students Card -->
+        <a href="<?= h(url('student_management/index.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
+            <article class="feature-card">
+                <span class="feature-symbol">♙</span>
+                <h3>Students</h3>
+                <p>
+                    Manage student profiles
+                    and enrolments.
+                </p>
+            </article>
+        </a>
 
-        <article class="feature-card">
-            <span class="feature-symbol">▤</span>
-            <h3>Classes</h3>
-            <p>
-                Organize classes, subjects
-                and schedules.
-            </p>
-        </article>
+        <!-- 2. Tutor Management Card (Admin Only) -->
+        <?php if ($role === 'admin'): ?>
+            <a href="<?= h(url('tutor_management/index.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
+                <article class="feature-card">
+                    <span class="feature-symbol">🗂</span>
+                    <h3>Tutor Management</h3>
+                    <p>
+                        View tutor profiles and
+                        login credentials.
+                    </p>
+                </article>
+            </a>
+        <?php endif; ?>
 
-        <article class="feature-card">
-            <span class="feature-symbol">▦</span>
-            <h3>Attendance</h3>
-            <p>
-                Track participation and
-                attendance records.
-            </p>
-        </article>
+        <!-- 3. Classes Card -->
+        <a href="<?= h(url('class_management/index.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
+            <article class="feature-card">
+                <span class="feature-symbol">▤</span>
+                <h3>Classes</h3>
+                <p>
+                    Organize classes, subjects
+                    and schedules.
+                </p>
+            </article>
+        </a>
 
-        <article class="feature-card">
-            <span class="feature-symbol">▥</span>
-            <h3>Study Materials</h3>
-            <p>
-                Keep learning resources
-                organized.
-            </p>
-        </article>
+        <!-- 4. Attendance Card (Role Differentiated) -->
+        <a href="<?= h(url($role === 'admin' ? 'admin/attendance.php' : ($role === 'staff' ? 'tutor/attendance.php' : 'student/attendance.php'))) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
+            <article class="feature-card">
+                <span class="feature-symbol">▦</span>
+                <h3>Attendance</h3>
+                <p>
+                    Track participation and
+                    attendance records.
+                </p>
+            </article>
+        </a>
 
-        <article class="feature-card">
-            <span class="feature-symbol">◷</span>
-            <h3>Timetable</h3>
-            <p>
-                Access and manage
-                class schedules.
-            </p>
-        </article>
+        <!-- 5. Study Materials Card -->
+        <a href="<?= h(url('class_management/subjects.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
+            <article class="feature-card">
+                <span class="feature-symbol">▥</span>
+                <h3>Study Materials</h3>
+                <p>
+                    Keep learning resources
+                    organized.
+                </p>
+            </article>
+        </a>
 
-        <article class="feature-card">
-            <span class="feature-symbol">⚙</span>
-            <h3>User Access</h3>
-            <p>
-                Role-based access for admins,
-                tutors and students.
-            </p>
-        </article>
+        <!-- 6. Timetable Card -->
+        <a href="<?= h(url('class_management/timetable.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
+            <article class="feature-card">
+                <span class="feature-symbol">◷</span>
+                <h3>Timetable</h3>
+                <p>
+                    Access and manage
+                    class schedules.
+                </p>
+            </article>
+        </a>
+
+        <!-- 7. User Access Card -->
+        <a href="<?= h(url($role === 'admin' ? 'auth/users.php' : 'auth/login.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
+            <article class="feature-card">
+                <span class="feature-symbol">⚙</span>
+                <h3>User Access</h3>
+                <p>
+                    Role-based access for admins,
+                    tutors and students.
+                </p>
+            </article>
+        </a>
 
     </div>
 

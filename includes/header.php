@@ -1,6 +1,18 @@
-
 <?php
 require_once __DIR__ . '/functions.php';
+
+$role = logged_in() ? (string) me()['role'] : '';
+
+// Determine profile link based on user role
+$profileUrl = '#';
+if ($role === 'admin') {
+    $profileUrl = url('admin/profile.php');
+} elseif ($role === 'staff') {
+    $profileUrl = url('tutor/profile.php');
+} elseif ($role === 'student') {
+    $studentId = me()['student_id'] ?? '';
+    $profileUrl = url('student_management/view_student.php?id=' . urlencode($studentId));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

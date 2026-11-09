@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/functions.php';
 
@@ -28,6 +27,21 @@ if ($role === 'admin' || $role === 'staff') {
         '♙'
     ];
 
+    // Admin-only Management modules right under Students
+    if ($role === 'admin') {
+        $items[] = [
+            'Admin Management',
+            'admin_management/index.php',
+            '🛡'
+        ];
+
+        $items[] = [
+            'Tutor Management',
+            'tutor_management/index.php',
+            '🗂'
+        ];
+    }
+
     $items[] = [
         'Classes',
         'class_management/index.php',
@@ -48,6 +62,17 @@ if ($role === 'admin' || $role === 'staff') {
 }
 
 // ========================================
+// ADMIN ATTENDANCE
+// ========================================
+if ($role === 'admin') {
+    $items[] = [
+        'Attendance Overview',
+        'admin/attendance.php',
+        '▦'
+    ];
+}
+
+// ========================================
 // STAFF / TEACHER NAVIGATION
 // ========================================
 if ($role === 'staff') {
@@ -55,7 +80,7 @@ if ($role === 'staff') {
     $items[] = [
         'Attendance Management',
         'tutor/attendance.php',
-        '▣'
+        '▦'
     ];
 }
 
@@ -72,15 +97,14 @@ if ($role === 'student') {
 }
 
 // ========================================
-// ADMIN-ONLY NAVIGATION
+// ROLE-BASED PROFILE NAVIGATION
 // ========================================
 if ($role === 'admin') {
-
-    $items[] = [
-        'User Management',
-        'auth/users.php',
-        '⚙'
-    ];
+    $items[] = ['My Profile', 'admin/profile.php', '👤'];
+} elseif ($role === 'staff') {
+    $items[] = ['My Profile', 'tutor/profile.php', '👤'];
+} elseif ($role === 'student') {
+    $items[] = ['My Profile', 'student_management/view_student.php?id=' . urlencode(me()['student_id'] ?? ''), '👤'];
 }
 
 // ========================================

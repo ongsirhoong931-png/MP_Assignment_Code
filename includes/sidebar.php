@@ -8,6 +8,12 @@ require_once __DIR__ . '/functions.php';
         Students
     </a>
 
+    <?php if (me()['role'] === 'admin'): ?>
+        <a href="<?= h(url('tutor_management/index.php')) ?>">
+            Tutor Management
+        </a>
+    <?php endif; ?>
+
     <a href="<?= h(url('class_management/index.php')) ?>">
         Classes
     </a>
@@ -20,10 +26,6 @@ require_once __DIR__ . '/functions.php';
         Timetable
     </a>
 
-    <?php if (me()['role'] === 'admin'): ?>
-        <a href="<?= h(url('auth/users.php')) ?>">
-            User Management
-        </a>
-    <?php endif; ?>
+    
 
 </aside>

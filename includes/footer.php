@@ -2,7 +2,7 @@
 </main>
 
 <footer class="site-footer">
-    Tuition Attendance Management System
+    EDUVEX Academy; Architected & Built by SH, SJ, and YX
 </footer>
 
 <script

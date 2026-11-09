@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/role_check.php';
@@ -6,7 +5,9 @@ require_once __DIR__ . '/../includes/role_check.php';
 allow_roles('admin', 'staff');
 
 $stmt = $pdo->query("
-    SELECT s.*, c.class_name,
+    SELECT s.*, 
+           c.grade_level, 
+           c.section,
            u.is_active AS account_active
     FROM students s
     LEFT JOIN classes c ON s.student_class = c.class_id
@@ -59,7 +60,15 @@ require __DIR__ . '/../includes/header.php';
             <td><?= h($student['student_name']) ?></td>
             <td><?= h($student['student_email']) ?></td>
             <td><?= h($student['student_phone_number']) ?></td>
-            <td><?= h($student['class_name'] ?? 'Not Assigned') ?></td>
+            <td>
+                <?php 
+                if (!empty($student['grade_level'])) {
+                    echo h($student['grade_level'] . ' - ' . $student['section']);
+                } else {
+                    echo 'Not Assigned';
+                }
+                ?>
+            </td>
 
             <td>
                 <?php

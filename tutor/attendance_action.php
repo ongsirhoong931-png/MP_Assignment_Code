@@ -1,4 +1,3 @@
-
 <?php
 
 require_once __DIR__ . '/../includes/attendance_functions.php';
@@ -67,14 +66,6 @@ try {
     // 2. VERIFY LESSON ASSIGNED TO STAFF
     // ==========================================
 
-    // FIX:
-    // Compare teacher_id with STF001,
-    // not numeric user_id.
-    //
-    // Removed c.class_teacher_id condition
-    // because an assigned subject teacher
-    // may not be the class teacher.
-
     $stmt = $pdo->prepare("
         SELECT l.*
         FROM attendance_lessons l
@@ -116,7 +107,7 @@ try {
     $session = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // ==========================================
-    // 4. GENERATE ATTENDANCE CODE + QR
+    // 4. GENERATE 6-DIGIT ATTENDANCE CODE
     // ==========================================
 
     if ($action === 'generate') {
@@ -133,11 +124,34 @@ try {
             );
         }
 
+        // Generate a unique 6-digit numeric code matching table schema
+        $attendanceCode = '';
+        $isUnique = false;
+        $attempts = 0;
+
+        while (!$isUnique && $attempts < 10) {
+            $attendanceCode = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+            
+            $checkCode = $pdo->prepare("
+                SELECT session_id FROM attendance_sessions 
+                WHERE attendance_code = ? AND status = 'open'
+            ");
+            $checkCode->execute([$attendanceCode]);
+            if ($checkCode->rowCount() == 0) {
+                $isUnique = true;
+            }
+            $attempts++;
+        }
+
+        if (!$isUnique) {
+            throw new RuntimeException('Failed to generate a unique attendance code. Please try again.');
+        }
+
         $stmt = $pdo->prepare("
             INSERT INTO attendance_sessions
                 (
                     lesson_id,
-                    code_nonce,
+                    attendance_code,
                     status,
                     generated_by_staff_id
                 )
@@ -146,11 +160,11 @@ try {
 
         $stmt->execute([
             $lessonId,
-            bin2hex(random_bytes(16)),
+            $attendanceCode,
             $staffId
         ]);
 
-        $message = 'Attendance code and QR generated.';
+        $message = 'Attendance code generated successfully.';
 
     // ==========================================
     // 5. OPEN ATTENDANCE

@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/role_check.php';
@@ -6,7 +5,9 @@ require_once __DIR__ . '/../includes/role_check.php';
 allow_roles('admin', 'staff', 'student');
 
 $role = (string) (me()['role'] ?? '');
-$canManage = in_array($role, ['admin', 'staff'], true);
+
+// ONLY admins can manage/add schedules. Staff are now view-only.
+$canManage = ($role === 'admin');
 
 $sql = "
     SELECT
@@ -85,14 +86,14 @@ require __DIR__ . '/../includes/header.php';
             <th>Room</th>
             <th>Tutor</th>
 
-            <?php if ($canManage): ?>
+            <?php if ($role === 'admin' || $role === 'staff'): ?>
                 <th>Actions</th>
             <?php endif; ?>
         </tr>
 
         <?php if (empty($schedules)): ?>
             <tr>
-                <td colspan="<?= $canManage ? 8 : 7 ?>">
+                <td colspan="<?= ($role === 'admin' || $role === 'staff') ? 8 : 7 ?>">
                     No timetable schedules found.
                 </td>
             </tr>

@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/role_check.php';
@@ -28,7 +27,9 @@ if (me()['role'] === 'student') {
 }
 
 $stmt = $pdo->prepare("
-    SELECT s.*, c.class_name,
+    SELECT s.*, 
+           c.grade_level, 
+           c.section,
            u.username, u.is_active
     FROM students s
     LEFT JOIN classes c ON s.student_class = c.class_id
@@ -45,11 +46,11 @@ if (!$student) {
 }
 
 $stmt = $pdo->prepare("
-    SELECT c.class_id, c.class_name
+    SELECT c.class_id, c.grade_level, c.section
     FROM student_enrolments e
     JOIN classes c ON e.class_id = c.class_id
     WHERE e.student_id = ?
-    ORDER BY c.class_name
+    ORDER BY c.grade_level, c.section
 ");
 
 $stmt->execute([$id]);
@@ -76,7 +77,7 @@ require __DIR__ . '/../includes/header.php';
         <?= h($student['student_phone_number']) ?></p>
 
     <p><strong>Primary Class:</strong>
-        <?= h($student['class_name'] ?? 'Not Assigned') ?></p>
+        <?= h(!empty($student['grade_level']) ? $student['grade_level'] . ' - ' . $student['section'] : 'Not Assigned') ?></p>
 
     <p><strong>Username:</strong>
         <?= h($student['username'] ?? 'No Login Account') ?></p>
@@ -100,7 +101,7 @@ require __DIR__ . '/../includes/header.php';
             <?php foreach ($enrolments as $class): ?>
                 <li>
                     <?= h($class['class_id']) ?>
-                    - <?= h($class['class_name']) ?>
+                    - <?= h($class['grade_level'] . ' - ' . $class['section']) ?>
                 </li>
             <?php endforeach; ?>
         </ul>

@@ -1,4 +1,3 @@
-
 <?php
 // =====================================================
 // EDUVEX ACADEMY
@@ -24,9 +23,6 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 // 2. ATTENDANCE SECURITY SECRET
 // =====================================================
 
-// Keep this file private.
-// Do not delete it after attendance codes are generated.
-
 function att_secret(): string
 {
     static $secret = null;
@@ -35,7 +31,6 @@ function att_secret(): string
         return $secret;
     }
 
-    // Use an existing valid constant if available.
     if (defined('ATTENDANCE_SECRET')) {
         $configured = (string) ATTENDANCE_SECRET;
 
@@ -48,10 +43,7 @@ function att_secret(): string
         }
     }
 
-    // Otherwise, use a persistent local key file.
-    $secretFile = __DIR__
-        . '/../config/attendance_secret.key';
-
+    $secretFile = __DIR__ . '/../config/attendance_secret.key';
     $configDir = dirname($secretFile);
 
     if (!is_dir($configDir)) {
@@ -60,9 +52,7 @@ function att_secret(): string
         );
     }
 
-    // Create the key only when it does not exist.
     if (!is_file($secretFile)) {
-
         $newSecret = bin2hex(random_bytes(32));
 
         $created = @file_put_contents(
@@ -100,7 +90,6 @@ function att_secret(): string
     return $secret;
 }
 
-// Check the secret when this file is loaded.
 att_secret();
 
 
@@ -177,8 +166,7 @@ function att_require_role(string $role): void
 function att_csrf(): string
 {
     if (empty($_SESSION['att_csrf'])) {
-        $_SESSION['att_csrf'] =
-            bin2hex(random_bytes(32));
+        $_SESSION['att_csrf'] = bin2hex(random_bytes(32));
     }
 
     return $_SESSION['att_csrf'];
@@ -208,9 +196,6 @@ function att_check_csrf(): void
 // =====================================================
 // 9. ATTENDANCE TIME WINDOW
 // =====================================================
-
-// Starts 2 hours before the lesson.
-// Ends 2 hours after the lesson.
 
 function att_window(array $lesson): array
 {
@@ -247,63 +232,19 @@ function att_within_window(array $lesson): bool
 
 
 // =====================================================
-// 11. GENERATE SIX-DIGIT ATTENDANCE CODE
+// 11. RETURN SIX-DIGIT ATTENDANCE CODE
 // =====================================================
 
 function att_code(array $session): string
 {
-    $message =
-        'code:' .
-        $session['session_id'] .
-        ':' .
-        $session['code_nonce'];
-
-    $hash = hash_hmac(
-        'sha256',
-        $message,
-        att_secret()
-    );
-
-    // Generate six digits, including leading zeroes.
-    $number = hexdec(
-        substr($hash, 0, 12)
-    ) % 1000000;
-
-    return str_pad(
-        (string) $number,
-        6,
-        '0',
-        STR_PAD_LEFT
-    );
+    // Directly return the generated 6-digit attendance code from the database session record
+    return (string) ($session['attendance_code'] ?? '------');
 }
 
 
 // =====================================================
-// 12. GENERATE QR TOKEN
+// 12. GET TEACHER LESSON
 // =====================================================
-
-function att_qr_token(array $session): string
-{
-    $message =
-        'qr:' .
-        $session['session_id'] .
-        ':' .
-        $session['code_nonce'];
-
-    return hash_hmac(
-        'sha256',
-        $message,
-        att_secret()
-    );
-}
-
-
-// =====================================================
-// 13. GET TEACHER LESSON
-// =====================================================
-
-// lesson_id is numeric.
-// teacher_id is a string such as STF001.
 
 function att_teacher_lesson(
     PDO $pdo,
@@ -315,7 +256,7 @@ function att_teacher_lesson(
         SELECT
             l.*,
             s.session_id,
-            s.code_nonce,
+            s.attendance_code,
             s.status,
             s.opened_at,
             s.closed_at,
@@ -349,11 +290,8 @@ function att_teacher_lesson(
 
 
 // =====================================================
-// 14. CHECK STUDENT ENROLMENT
+// 13. CHECK STUDENT ENROLMENT
 // =====================================================
-
-// student_id: STU001
-// class_id: CLS001
 
 function att_student_enrolled(
     PDO $pdo,
@@ -382,7 +320,7 @@ function att_student_enrolled(
 
 
 // =====================================================
-// 15. GET STUDENT ATTENDANCE SESSION
+// 14. GET STUDENT ATTENDANCE SESSION
 // =====================================================
 
 function att_student_session(
@@ -440,7 +378,7 @@ function att_student_session(
 
 
 // =====================================================
-// 16. STORE ATTENDANCE MESSAGE
+// 15. STORE ATTENDANCE MESSAGE
 // =====================================================
 
 function att_message(
@@ -456,7 +394,7 @@ function att_message(
 
 
 // =====================================================
-// 17. DISPLAY ATTENDANCE MESSAGE
+// 16. DISPLAY ATTENDANCE MESSAGE
 // =====================================================
 
 function att_flash(): void
@@ -484,7 +422,7 @@ function att_flash(): void
 
 
 // =====================================================
-// 18. ATTENDANCE REDIRECT
+// 17. ATTENDANCE REDIRECT
 // =====================================================
 
 function att_redirect(string $path): never
