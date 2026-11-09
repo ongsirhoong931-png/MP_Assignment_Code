@@ -62,7 +62,7 @@ require __DIR__ . '/includes/header.php';
         <!-- Dynamic Profile Link based on Role -->
         <?php if ($role === 'admin'): ?>
             <a href="<?= h(url('admin/profile.php')) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
-                <span></span>
+                <span>👤</span>
                 Admin Profile
             </a>
         <?php elseif ($role === 'staff'): ?>
@@ -72,7 +72,7 @@ require __DIR__ . '/includes/header.php';
             </a>
         <?php elseif ($role === 'student'): ?>
             <a href="<?= h(url('student_management/view_student.php?id=' . urlencode(me()['student_id'] ?? ''))) ?>" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
-                <span></span>
+                <span>👤</span>
                 Student Profile
             </a>
         <?php endif; ?>
