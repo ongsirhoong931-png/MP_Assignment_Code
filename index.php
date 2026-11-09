@@ -124,79 +124,50 @@ require __DIR__ . '/includes/header.php';
 
     <div class="feature-grid">
 
-        <!-- 1. Students Card -->
-        <a href="<?= h(url('student_management/index.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
-            <article class="feature-card">
-                <span class="feature-symbol">♙</span>
-                <h3>Students</h3>
-                <p>
-                    Manage student profiles
-                    and enrolments.
-                </p>
-            </article>
-        </a>
+        <article class="feature-card">
+            <span class="feature-symbol">♙</span>
+            <h3>Students</h3>
+            <p>
+                Manage student profiles
+                and enrolments.
+            </p>
+        </article>
 
-        <!-- 2. Tutor Management Card (Admin Only) -->
-        <?php if ($role === 'admin'): ?>
-            <a href="<?= h(url('tutor_management/index.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
-                <article class="feature-card">
-                    <span class="feature-symbol">🗂</span>
-                    <h3>Tutor Management</h3>
-                    <p>
-                        View tutor profiles and
-                        login credentials.
-                    </p>
-                </article>
-            </a>
-        <?php endif; ?>
+        <article class="feature-card">
+            <span class="feature-symbol">▤</span>
+            <h3>Classes</h3>
+            <p>
+                Organize classes, subjects
+                and schedules.
+            </p>
+        </article>
 
-        <!-- 3. Classes Card -->
-        <a href="<?= h(url('class_management/index.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
-            <article class="feature-card">
-                <span class="feature-symbol">▤</span>
-                <h3>Classes</h3>
-                <p>
-                    Organize classes, subjects
-                    and schedules.
-                </p>
-            </article>
-        </a>
+        <article class="feature-card">
+            <span class="feature-symbol">▦</span>
+            <h3>Attendance</h3>
+            <p>
+                Track participation and
+                attendance records.
+            </p>
+        </article>
 
-        <!-- 4. Attendance Card (Role Differentiated) -->
-        <a href="<?= h(url($role === 'admin' ? 'admin/attendance.php' : ($role === 'staff' ? 'tutor/attendance.php' : 'student/attendance.php'))) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
-            <article class="feature-card">
-                <span class="feature-symbol">▦</span>
-                <h3>Attendance</h3>
-                <p>
-                    Track participation and
-                    attendance records.
-                </p>
-            </article>
-        </a>
+        <article class="feature-card">
+            <span class="feature-symbol">▥</span>
+            <h3>Study Materials</h3>
+            <p>
+                Keep learning resources
+                organized.
+            </p>
+        </article>
 
-        <!-- 5. Study Materials Card -->
-        <a href="<?= h(url('class_management/subjects.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
-            <article class="feature-card">
-                <span class="feature-symbol">▥</span>
-                <h3>Study Materials</h3>
-                <p>
-                    Keep learning resources
-                    organized.
-                </p>
-            </article>
-        </a>
-
-        <!-- 6. Timetable Card -->
-        <a href="<?= h(url('class_management/timetable.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
-            <article class="feature-card">
-                <span class="feature-symbol">◷</span>
-                <h3>Timetable</h3>
-                <p>
-                    Access and manage
-                    class schedules.
-                </p>
-            </article>
-        </a>
+        <article class="feature-card">
+            <span class="feature-symbol">◷</span>
+            <h3>Timetable</h3>
+            <p>
+                Access and manage
+                class schedules.
+            </p>
+        </article>
 
         <!-- 7. User Access Card -->
         <a href="<?= h(url($role === 'admin' ? 'auth/users.php' : 'auth/login.php')) ?>" class="dashboard-card-link" style="text-decoration: none; color: inherit; display: block; transition: transform 0.2s ease;">
