@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/material_functions.php';
 
-mat_require_role(['admin', 'tutor', 'student']);
+mat_require_role(['admin', 'staff', 'student']);
 
 $pageTitle = 'Study Materials';
 $extraCss  = ['assets/css/material.css'];
@@ -20,11 +20,9 @@ $materials = $current ? mat_list($subjectId) : [];
 
 require __DIR__ . '/../includes/header.php';
 ?>
+<?php mat_css(); ?>
+<?php mat_confirm_assets(); ?>
 <div class="material-container">
-
-    <?php if (!empty($_GET['msg'])): ?>
-        <div class="material-alert"><?= h($_GET['msg']) ?></div>
-    <?php endif; ?>
 
     <div class="material-head">
         <h1>Study Materials</h1>
@@ -82,17 +80,20 @@ require __DIR__ . '/../includes/header.php';
 
                                 <?php if ($manage): ?>
                                     <a href="<?= h(url('materials/edit_material.php?id=' . urlencode($m['material_id']))) ?>">Edit</a>
+                                    <a href="<?= h(url('materials/view_material.php?id=' . urlencode($m['material_id']) . '#attachments')) ?>">Attach</a>
 
                                     <form method="post" style="display:inline"
                                           action="<?= h(url($m['is_published'] ? 'materials/ubpublish_material.php' : 'materials/publish_material.php')) ?>">
                                         <input type="hidden" name="id" value="<?= h($m['material_id']) ?>">
+<input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
                                         <button type="submit" class="link-button"><?= $m['is_published'] ? 'Unpublish' : 'Publish' ?></button>
                                     </form>
 
                                     <form method="post" style="display:inline"
                                           action="<?= h(url('materials/delete_material.php')) ?>"
-                                          onsubmit="return confirm('Delete this material and its attachments?');">
+                                          data-confirm="Delete this material and its attachments?">
                                         <input type="hidden" name="id" value="<?= h($m['material_id']) ?>">
+<input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
                                         <button type="submit" class="link-button">Delete</button>
                                     </form>
                                 <?php endif; ?>

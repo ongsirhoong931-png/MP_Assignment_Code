@@ -7,7 +7,7 @@ require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/../config/database.php';   // creates $pdo
 require_once __DIR__ . '/role_check.php';           // allow_roles()
 
-const MAT_TYPES = ['PDF', 'Document', 'Presentation', 'Image', 'ZIP', 'Video', 'Link', 'Other'];
+const MAT_TYPES = ['Lesson Note', 'Lab Manual', 'Assignment Brief', 'Syllabus Update', 'Study Card Set', 'PDF', 'Document', 'Presentation', 'Image', 'ZIP'];
 const MAT_ALLOWED_EXT = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'zip', 'txt'];
 const MAT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -228,7 +228,7 @@ function mat_read_post(): array
         'subject_id'        => $_POST['subject_id'] ?? '',
         'class_id'          => $_POST['class_id'] ?? '',
         'content_type'      => $_POST['content_type'] ?? 'Document',
-        'rich_text_content' => trim($_POST['rich_text_content'] ?? ''),
+        'rich_text_content' => mat_sanitize_html(trim($_POST['rich_text_content'] ?? '')),
         'is_published'      => isset($_POST['is_published']) ? 1 : 0,
         'release_date'      => trim($_POST['release_date'] ?? ''),
     ];
@@ -335,38 +335,36 @@ function mat_delete(string $id): void
    ATTACHMENTS
 --------------------------------------------------------- */
 
-// handles the whole upload request, then redirects back to the material
-function mat_handle_upload(): void
+// Saves ONE uploaded file for a material. Returns an error message, or null when OK / nothing chosen.
+function mat_store_file(string $materialId, array $file): ?string
 {
     $pdo = mat_pdo();
 
-    $materialId = $_POST['material_id'] ?? '';
-    $m = mat_load_for_manage($materialId);
-    $back = 'materials/view_material.php?id=' . urlencode($m['material_id']);
-
-    if (!isset($_FILES['attachment']) || $_FILES['attachment']['error'] !== UPLOAD_ERR_OK) {
-        mat_back('Upload failed. Please choose a file (check upload_max_filesize in php.ini).', $back);
+    if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
     }
+    $origName = basename((string) $file['name']);
 
-    $file = $_FILES['attachment'];
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return $origName . ': upload failed (check upload_max_filesize in php.ini).';
+    }
     if ($file['size'] > MAT_MAX_BYTES) {
-        mat_back('File is too large (max 10 MB).', $back);
+        return $origName . ': file is too large (max 10 MB).';
     }
 
-    $origName = basename($file['name']);
     $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
     if (!in_array($ext, MAT_ALLOWED_EXT, true)) {
-        mat_back('File type not allowed. Allowed: ' . implode(', ', MAT_ALLOWED_EXT), $back);
+        return $origName . ': file type not allowed (' . implode(', ', MAT_ALLOWED_EXT) . ').';
     }
 
     $dir = __DIR__ . '/../uploads/materials';
     if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
-        mat_back('Could not create the upload folder.', $back);
+        return 'Could not create the upload folder.';
     }
 
     $storedName = bin2hex(random_bytes(8)) . '.' . $ext;
     if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $storedName)) {
-        mat_back('Could not save the file.', $back);
+        return $origName . ': could not save the file.';
     }
 
     $stmt = $pdo->prepare(
@@ -375,13 +373,102 @@ function mat_handle_upload(): void
     );
     $stmt->execute([
         next_id($pdo, 'material_attachments', 'attachment_id', 'ATTCH'),
-        $m['material_id'],
+        $materialId,
         mb_substr($origName, 0, 255),
         strtoupper($ext),
         'uploads/materials/' . $storedName,
     ]);
 
-    mat_back('File uploaded.', $back);
+    return null;
+}
+
+// Saves every file of a multi-file input (name="attachments[]"). Returns [saved count, errors].
+function mat_store_uploads(string $materialId, string $field = 'attachments'): array
+{
+    $saved = 0;
+    $errors = [];
+
+    if (empty($_FILES[$field]['name'])) {
+        return [0, []];
+    }
+
+    foreach ((array) $_FILES[$field]['name'] as $i => $name) {
+        $file = [
+            'name'     => $name,
+            'tmp_name' => $_FILES[$field]['tmp_name'][$i],
+            'error'    => $_FILES[$field]['error'][$i],
+            'size'     => $_FILES[$field]['size'][$i],
+        ];
+        if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+            continue;
+        }
+        $err = mat_store_file($materialId, $file);
+        if ($err) {
+            $errors[] = $err;
+        } else {
+            $saved++;
+        }
+    }
+    return [$saved, $errors];
+}
+
+// Used by create/edit: uploads the form's files and builds the notice text.
+function mat_upload_summary(string $materialId, string $message): string
+{
+    [$saved, $errors] = mat_store_uploads($materialId);
+    if ($saved) {
+        $message .= ' ' . $saved . ' file(s) uploaded.';
+    }
+    if ($errors) {
+        $message .= ' ' . implode(' ', $errors);
+    }
+    return $message;
+}
+
+// Upload from the view page (single file), then redirect back.
+function mat_handle_upload(): void
+{
+    $m = mat_load_for_manage($_POST['material_id'] ?? '');
+    $back = 'materials/view_material.php?id=' . urlencode($m['material_id']) . '#attachments';
+
+    if (!isset($_FILES['attachment']) || $_FILES['attachment']['error'] === UPLOAD_ERR_NO_FILE) {
+        mat_back('Please choose a file.', $back);
+    }
+
+    $err = mat_store_file($m['material_id'], $_FILES['attachment']);
+    mat_back($err ?? 'File uploaded.', $back);
+}
+
+// Remove one attachment (database row + file on disk).
+function mat_handle_delete_attachment(string $attachmentId): void
+{
+    $pdo = mat_pdo();
+
+    $stmt = $pdo->prepare('SELECT * FROM material_attachments WHERE attachment_id = ?');
+    $stmt->execute([$attachmentId]);
+    $a = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$a) {
+        mat_back('Attachment not found.');
+    }
+
+    $m = mat_load_for_manage($a['material_id']);
+
+    if (!empty($a['file_path'])) {
+        $full = realpath(__DIR__ . '/../' . $a['file_path']);
+        $root = realpath(__DIR__ . '/../uploads/materials');
+        if ($full && $root && strpos($full, $root) === 0 && is_file($full)) {
+            @unlink($full);
+        }
+    }
+
+    $pdo->prepare('DELETE FROM material_attachments WHERE attachment_id = ?')->execute([$attachmentId]);
+    mat_back('Attachment removed.', 'materials/view_material.php?id=' . urlencode($m['material_id']) . '#attachments');
+}
+
+// Loads the module stylesheet directly, so it does not depend on header.php.
+function mat_css(): void
+{
+    echo '<link rel="stylesheet" href="' . h(url('assets/css/material.css')) . '">' . "\n";
 }
 
 // sends the file to the browser after a permission check
@@ -488,4 +575,228 @@ function mat_list(string $subjectId): array
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/* ---------------------------------------------------------
+   RICH TEXT: TEMPLATES, SANITISER, RENDERING
+--------------------------------------------------------- */
+
+// Pre-built templates loaded by the "Template" button in the editor.
+function mat_templates(): array
+{
+    return [
+        'Lesson Note' =>
+            '<h2>Lecture Summary</h2><p><strong>Topic:</strong> </p>'
+            . '<h3>Learning Objectives</h3><ul><li></li><li></li></ul>'
+            . '<h3>Key Points</h3><ul><li></li><li></li></ul>'
+            . '<h3>Summary</h3><p></p>',
+        'Lab Manual' =>
+            '<h2>Lab Guide</h2><p><strong>Lab title:</strong> </p>'
+            . '<h3>Objective</h3><p></p>'
+            . '<h3>Equipment / Software</h3><ul><li></li></ul>'
+            . '<h3>Procedure</h3><ol><li></li><li></li></ol>'
+            . '<h3>Expected Result</h3><p></p>',
+        'Assignment Brief' =>
+            '<h2>Assignment Brief</h2><p><strong>Due date:</strong> </p>'
+            . '<h3>Task Description</h3><p></p>'
+            . '<h3>Requirements</h3><ul><li></li></ul>'
+            . '<h3>Marking Criteria</h3><ul><li></li></ul>'
+            . '<h3>Submission</h3><p></p>',
+        'Syllabus Update' =>
+            '<h2>Syllabus Update</h2><p><strong>Effective from:</strong> </p>'
+            . '<h3>What Changed</h3><ul><li></li></ul>'
+            . '<h3>Reason</h3><p></p>',
+        'Study Card Set' =>
+            '<h2>Study Cards</h2>'
+            . '<h3>Card 1</h3><p><strong>Q:</strong> </p><p><strong>A:</strong> </p>'
+            . '<h3>Card 2</h3><p><strong>Q:</strong> </p><p><strong>A:</strong> </p>',
+    ];
+}
+
+// Only http(s) links, relative links, or YouTube/Vimeo embeds are allowed.
+function mat_safe_url(string $url, string $tag): bool
+{
+    $clean = preg_replace('/[\x00-\x20]+/', '', $url);
+    if ($clean === '' || $clean === null) {
+        return false;
+    }
+    if ($tag === 'iframe') {
+        return (bool) preg_match(
+            '#^https://(www\.youtube\.com/embed/|www\.youtube-nocookie\.com/embed/|player\.vimeo\.com/video/)[A-Za-z0-9_-]+#',
+            $clean
+        );
+    }
+    if (preg_match('#^[a-z][a-z0-9+.\-]*:#i', $clean)) {
+        return (bool) preg_match('#^https?://#i', $clean);
+    }
+    return strpos($clean, '//') !== 0;
+}
+
+// Allow-list HTML cleaner: stops script injection (XSS) in saved content.
+function mat_sanitize_html(string $html): string
+{
+    if (trim($html) === '') {
+        return '';
+    }
+
+    $allowedTags = ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'h2', 'h3', 'h4', 'ul', 'ol', 'li',
+                    'blockquote', 'pre', 'code', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                    'div', 'span', 'hr', 'video', 'audio', 'source', 'iframe'];
+    $dropTags = ['script', 'style', 'object', 'embed', 'form', 'input', 'button', 'textarea', 'select',
+                 'link', 'meta', 'svg', 'math', 'base'];
+    $allowedAttrs = [
+        'a'      => ['href', 'title'],
+        'img'    => ['src', 'alt', 'width', 'height'],
+        'video'  => ['src', 'controls', 'width', 'height'],
+        'audio'  => ['src', 'controls'],
+        'source' => ['src', 'type'],
+        'iframe' => ['src', 'width', 'height', 'allowfullscreen', 'title'],
+    ];
+
+    $doc = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="UTF-8"><div>' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_clear_errors();
+
+    $root = $doc->getElementsByTagName('div')->item(0);
+    if (!$root) {
+        return '';
+    }
+
+    $clean = function (DOMNode $node) use (&$clean, $allowedTags, $dropTags, $allowedAttrs): void {
+        foreach (iterator_to_array($node->childNodes) as $child) {
+            if ($child instanceof DOMComment) {
+                $node->removeChild($child);
+                continue;
+            }
+            if (!($child instanceof DOMElement)) {
+                continue;
+            }
+
+            $tag = strtolower($child->tagName);
+
+            if (in_array($tag, $dropTags, true)) {
+                $node->removeChild($child);
+                continue;
+            }
+
+            if (!in_array($tag, $allowedTags, true)) {
+                // unknown tag: keep its text/children, drop the tag itself
+                $clean($child);
+                while ($child->firstChild) {
+                    $node->insertBefore($child->firstChild, $child);
+                }
+                $node->removeChild($child);
+                continue;
+            }
+
+            foreach (iterator_to_array($child->attributes) as $attr) {
+                $name = strtolower($attr->name);
+                if (!in_array($name, $allowedAttrs[$tag] ?? [], true)) {
+                    $child->removeAttribute($attr->name);
+                } elseif (in_array($name, ['href', 'src'], true) && !mat_safe_url($attr->value, $tag)) {
+                    $child->removeAttribute($attr->name);
+                }
+            }
+
+            if ($tag === 'iframe' && !$child->hasAttribute('src')) {
+                $node->removeChild($child);
+                continue;
+            }
+            if ($tag === 'a') {
+                $child->setAttribute('rel', 'noopener noreferrer');
+                $child->setAttribute('target', '_blank');
+            }
+
+            $clean($child);
+        }
+    };
+    $clean($root);
+
+    $out = '';
+    foreach ($root->childNodes as $c) {
+        $out .= $doc->saveHTML($c);
+    }
+    return $out;
+}
+
+// HTML to show on the page / in the editor. Old plain-text rows still work.
+function mat_render_content(?string $text): string
+{
+    $text = (string) $text;
+    if (trim($text) === '') {
+        return '';
+    }
+    if ($text === strip_tags($text)) {
+        return nl2br(h($text));
+    }
+    return mat_sanitize_html($text);
+}
+
+// KaTeX (LaTeX formulas): use \( ... \) for inline and $$ ... $$ for block.
+function mat_katex_assets(): void
+{
+    ?>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var el = document.querySelector('.material-content');
+        if (el && window.renderMathInElement) {
+            renderMathInElement(el, {delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '\\(', right: '\\)', display: false}
+            ]});
+        }
+    });
+    </script>
+    <?php
+}
+
+// Styled confirm dialog. Any <form data-confirm="Question?"> asks before it submits.
+function mat_confirm_assets(): void
+{
+    ?>
+    <div id="mat-modal" class="mat-modal" hidden>
+        <div class="mat-modal-box" role="dialog" aria-modal="true">
+            <p id="mat-modal-text"></p>
+            <div class="mat-modal-actions">
+                <button type="button" id="mat-modal-ok" class="button">Yes, continue</button>
+                <button type="button" id="mat-modal-cancel" class="button button-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var modal = document.getElementById('mat-modal');
+        var text  = document.getElementById('mat-modal-text');
+        var ok    = document.getElementById('mat-modal-ok');
+        var cancel = document.getElementById('mat-modal-cancel');
+        var pending = null;
+
+        function close() { modal.hidden = true; pending = null; }
+
+        document.addEventListener('submit', function (e) {
+            var f = e.target;
+            var msg = f.getAttribute ? f.getAttribute('data-confirm') : null;
+            if (!msg) { return; }
+            e.preventDefault();
+            pending = f;
+            text.textContent = msg;
+            modal.hidden = false;
+            cancel.focus();
+        });
+
+        ok.addEventListener('click', function () {
+            var f = pending;
+            close();
+            if (f) { f.submit(); }
+        });
+        cancel.addEventListener('click', close);
+        modal.addEventListener('click', function (e) { if (e.target === modal) { close(); } });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { close(); } });
+    })();
+    </script>
+    <?php
 }
