@@ -108,7 +108,8 @@ require __DIR__ . '/includes/header.php';
 
         <article class="feature-card">
             <span class="feature-symbol">▤</span>
-            <h3>Classes</h3>
+            <a href="/class_management/index.php">Classes</a>
+
             <p>
                 Organize classes, subjects
                 and schedules.
@@ -117,7 +118,7 @@ require __DIR__ . '/includes/header.php';
 
         <article class="feature-card">
             <span class="feature-symbol">▦</span>
-            <h3>Attendance</h3>
+            <a href="/attendance/index.php">Study Materials</a>
             <p>
                 Track participation and
                 attendance records.
@@ -126,7 +127,8 @@ require __DIR__ . '/includes/header.php';
 
         <article class="feature-card">
             <span class="feature-symbol">▥</span>
-            <h3>Study Materials</h3>
+            <a href="/materials/index.php">Study Materials</a>
+
             <p>
                 Keep learning resources
                 organized.
@@ -135,7 +137,7 @@ require __DIR__ . '/includes/header.php';
 
         <article class="feature-card">
             <span class="feature-symbol">◷</span>
-            <h3>Timetable</h3>
+            <a href="/class_management/timetable.php">Timetable</a>
             <p>
                 Access and manage
                 class schedules.
