@@ -118,7 +118,7 @@ require __DIR__ . '/includes/header.php';
 
         <article class="feature-card">
             <span class="feature-symbol">▦</span>
-            <h3>Attendance</h3>
+            <a href="/attendance/index.php">Study Materials</a>
             <p>
                 Track participation and
                 attendance records.
