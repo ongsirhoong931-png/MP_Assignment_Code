@@ -513,3 +513,33 @@ VALUES
      'student', NULL, NULL, 'STU001', 1);
 
 SHOW FULL TABLES;
+
+CREATE TABLE IF NOT EXISTS attendance_audit_log (
+    log_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    action ENUM(
+        'mark',
+        'update',
+        'delete',
+        'override',
+        'qr_sync'
+    ) NOT NULL,
+
+    attendance_id VARCHAR(12) NULL,
+    student_id VARCHAR(12) NOT NULL,
+    class_id VARCHAR(12) NOT NULL,
+    `date` DATE NOT NULL,
+
+    old_status VARCHAR(20) NULL,
+    new_status VARCHAR(20) NULL,
+    reason VARCHAR(255) NULL,
+
+    acted_by_user_id BIGINT UNSIGNED NOT NULL,
+    acted_by_role VARCHAR(20) NOT NULL,
+    acted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_audit_student (student_id, `date`),
+    INDEX idx_audit_class (class_id, `date`),
+    INDEX idx_audit_action (action, acted_at)
+) ENGINE=InnoDB;
+

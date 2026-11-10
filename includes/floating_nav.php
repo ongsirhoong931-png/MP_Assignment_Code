@@ -70,6 +70,11 @@ if ($role === 'admin') {
         'admin/attendance.php',
         '▦'
     ];
+        $items[] = [
+        'Attendance Records',
+        'attendance/index.php',
+        '▤'
+    ];
 }
 
 // ========================================
@@ -82,6 +87,11 @@ if ($role === 'staff') {
         'tutor/attendance.php',
         '▦'
     ];
+        $items[] = [
+        'Attendance Records',
+        'attendance/index.php',
+        '▤'
+    ];
 }
 
 // ========================================
@@ -93,6 +103,11 @@ if ($role === 'student') {
         'Mark Attendance',
         'student/attendance.php',
         '✓'
+    ];
+        $items[] = [
+        'My Attendance',
+        'attendance/index.php',
+        '▤'
     ];
 }
 
