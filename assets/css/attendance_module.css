@@ -1,0 +1,163 @@
+/* =========================================
+   MODULE 5: ATTENDANCE RECORDING
+   Uses the colour variables from style.css
+   ========================================= */
+
+.am-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 22px;
+}
+
+.am-nav a {
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.am-nav a:hover,
+.am-nav a.active {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+    color: #FFFFFF;
+}
+
+.am-error {
+    background: #4A2230;
+    color: #FFC2C2;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.am-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.am-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.am-grid a.am-tile {
+    display: block;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.am-grid a.am-tile:hover {
+    border-color: var(--accent);
+}
+
+.am-tile strong {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.am-tile span {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.am-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 18px;
+}
+
+.am-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.am-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.am-present { background: #1C4035; color: #BAF3D6; }
+.am-absent  { background: #4A2230; color: #FFC2C2; }
+.am-late    { background: #4A3C1C; color: #F8E2A0; }
+.am-excused { background: #26364F; color: #B9D4FF; }
+
+.am-low {
+    color: #FF9A9A;
+    font-weight: 700;
+}
+
+.am-radios label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 14px 0 0;
+    white-space: nowrap;
+}
+
+/* style.css makes every input full width; keep radios and checkboxes small */
+.am-radios input[type="radio"],
+.am-filters input[type="checkbox"],
+.am-card input[type="checkbox"],
+.table-wrap input[type="checkbox"] {
+    display: inline-block;
+    width: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.am-note {
+    opacity: 0.75;
+    font-size: 13px;
+}
+
+.am-pager a {
+    margin-left: 8px;
+}
+
+.am-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.am-summary div {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 120px;
+}
+
+.am-summary b {
+    display: block;
+    font-size: 22px;
+}
+
+@media (max-width: 640px) {
+    .am-filters label,
+    .am-filters select,
+    .am-filters input {
+        width: 100%;
+    }
+}
