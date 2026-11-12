@@ -585,7 +585,6 @@ function am_nav(string $active = ''): void
             'search'     => ['search_attendance.php', 'Search'],
             'history'    => ['attendance_history.php', 'My History'],
             'percentage' => ['attendance_percentage.php', 'My Percentage'],
-            'scan'       => ['scan_qr.php', 'Scan QR'],
         ];
     } else {
         $links = [
@@ -597,7 +596,6 @@ function am_nav(string $active = ''): void
             'search'     => ['search_attendance.php', 'Search'],
             'history'    => ['attendance_history.php', 'Student History'],
             'percentage' => ['attendance_percentage.php', 'Percentage'],
-            'qr'         => ['qr_attendance.php', 'QR Attendance'],
         ];
 
         if (am_is_admin()) {

@@ -20,7 +20,6 @@ $tiles = am_is_student()
         ['search_attendance.php', 'Search', 'Find records by date or status.'],
         ['attendance_history.php', 'My History', 'Full history with your totals.'],
         ['attendance_percentage.php', 'My Percentage', 'Attendance percentage per class.'],
-        ['scan_qr.php', 'Scan QR / Enter Code', 'Check in to a class that is open now.'],
     ]
     : [
         ['mark_attendance.php', '1. Mark Attendance', 'Record each student for a class and day.'],
@@ -32,15 +31,14 @@ $tiles = am_is_student()
         ['bulk_attendance.php', '7. Bulk Marking', 'Apply one status to many students at once.'],
         ['attendance_history.php', '8. Student History', 'Full attendance history of one student.'],
         ['attendance_percentage.php', '9. Percentage', 'Attendance percentage per student.'],
-        ['qr_attendance.php', '11. QR / Code Attendance', 'See QR check-ins and save them as records.'],
     ];
 
 if (am_is_admin()) {
-    array_splice($tiles, 9, 0, [[
+    $tiles[] = [
         'attendance_override.php',
         '10. Admin Override',
         'Correct any record with a recorded reason.',
-    ]]);
+    ];
 }
 
 $pageTitle = 'Attendance Recording';
