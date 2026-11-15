@@ -1,0 +1,144 @@
+/* =========================================
+   MODULE 6: LEAVE & ABSENCE MANAGEMENT
+   Reuses the am-* classes from attendance_module.css
+   ========================================= */
+
+.lv-bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.lv-bar .am-nav {
+    margin-bottom: 14px;
+}
+
+.lv-lang {
+    display: inline-flex;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.lv-lang a {
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.lv-lang a.active {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+    color: #FFFFFF;
+}
+
+.lv-pending  { background: #4A3C1C; color: #F8E2A0; }
+.lv-approved { background: #1C4035; color: #BAF3D6; }
+.lv-rejected { background: #4A2230; color: #FFC2C2; }
+
+.lv-form {
+    max-width: 640px;
+}
+
+.lv-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+    font-size: 14px;
+}
+
+.lv-form textarea {
+    width: 100%;
+    min-height: 110px;
+}
+
+.lv-form input[type="file"] {
+    padding: 8px;
+}
+
+.lv-hint {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.lv-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.lv-actions form {
+    margin: 0;
+}
+
+.lv-actions a,
+.lv-actions button {
+    font-size: 13px;
+    padding: 5px 10px;
+}
+
+.lv-detail {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 8px 14px;
+    margin: 0 0 18px;
+}
+
+.lv-detail dt {
+    opacity: 0.7;
+}
+
+.lv-detail dd {
+    margin: 0;
+}
+
+.lv-timeline {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0 0 0 14px;
+    border-left: 2px solid var(--line);
+}
+
+.lv-timeline li {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.lv-timeline small {
+    display: block;
+    opacity: 0.7;
+}
+
+.lv-students {
+    max-height: 260px;
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+}
+
+.lv-students label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.lv-students input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .lv-detail {
+        grid-template-columns: 1fr;
+    }
+}

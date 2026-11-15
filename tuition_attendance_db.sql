@@ -543,3 +543,36 @@ CREATE TABLE IF NOT EXISTS attendance_audit_log (
     INDEX idx_audit_action (action, acted_at)
 ) ENGINE=InnoDB;
 
+/* 
+   MODULE 6: LEAVE & ABSENCE MANAGEMENT
+    */
+
+CREATE TABLE IF NOT EXISTS leave_application_log (
+    log_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+    leave_id VARCHAR(12) NOT NULL,
+
+    action ENUM(
+        'submit',
+        'update',
+        'cancel',
+        'mc_upload',
+        'approve',
+        'reject',
+        'pre_approve',
+        'attendance_sync'
+    ) NOT NULL,
+
+    applicant_id VARCHAR(12) NOT NULL,
+    applicant_type ENUM('Student','Staff') NOT NULL,
+    start_date DATE NULL,
+    end_date DATE NULL,
+    note VARCHAR(255) NULL,
+
+    acted_by_user_id BIGINT UNSIGNED NOT NULL,
+    acted_by_role VARCHAR(20) NOT NULL,
+    acted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_leave_log_leave (leave_id, acted_at),
+    INDEX idx_leave_log_applicant (applicant_id, applicant_type)
+) ENGINE=InnoDB;
