@@ -112,6 +112,17 @@ if ($role === 'student') {
 }
 
 // ========================================
+// LEAVE & ABSENCE (Module 6)
+// ========================================
+if ($role === 'admin' || $role === 'staff' || $role === 'student') {
+    $items[] = [
+        'Leave',
+        'leave/index.php',
+        '✉'
+    ];
+}
+
+// ========================================
 // ROLE-BASED PROFILE NAVIGATION
 // ========================================
 if ($role === 'admin') {
