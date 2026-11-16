@@ -10,5 +10,7 @@
     defer>
 </script>
 
+<?= site_language_widget() ?>
+
 </body>
 </html>
