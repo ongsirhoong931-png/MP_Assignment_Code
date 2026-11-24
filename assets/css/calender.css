@@ -1,0 +1,129 @@
+/* assets/css/calendar.css - holiday module only.
+   If your main CSS already has variables for colours, replace the :root values below. */
+
+.cal-page {
+    --cal-bg-card: #1e1b2e;
+    --cal-border: #322e48;
+    --cal-text: #f4f2ff;
+    --cal-muted: #a9a3c7;
+    --cal-accent: #8b6cf0;
+    --cal-accent-soft: #3d3260;
+    --cal-danger: #e5546b;
+    --cal-success: #3fb27f;
+    color: var(--cal-text);
+}
+
+.cal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.cal-head h1 { margin: 4px 0 0; font-size: 2rem; }
+.cal-eyebrow {
+    margin: 0;
+    font-size: .75rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: #a78bfa;
+    font-weight: 700;
+}
+.cal-id { font-size: .9rem; color: var(--cal-muted); font-weight: 400; }
+
+/* buttons */
+.cal-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--cal-border);
+    background: var(--cal-bg-card);
+    color: var(--cal-text);
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+.cal-btn:hover { border-color: var(--cal-accent); }
+.cal-btn-primary { background: var(--cal-accent); border-color: var(--cal-accent); color: #fff; }
+.cal-btn-primary:hover { filter: brightness(1.1); }
+.cal-btn-danger { color: var(--cal-danger); border-color: var(--cal-danger); background: transparent; }
+.cal-btn-danger:hover { background: var(--cal-danger); color: #fff; }
+.cal-btn-sm { padding: 6px 12px; font-size: .85rem; }
+.cal-inline { display: inline; margin: 0; }
+
+/* alerts */
+.cal-alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; border: 1px solid; }
+.cal-alert-success { background: rgba(63,178,127,.12); border-color: var(--cal-success); }
+.cal-alert-error   { background: rgba(229,84,107,.12); border-color: var(--cal-danger); }
+
+/* filters */
+.cal-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.cal-filters select,
+.cal-filters input[type="text"] { min-width: 160px; }
+
+/* inputs */
+.cal-page select,
+.cal-page input[type="text"],
+.cal-page input[type="date"] {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--cal-border);
+    background: #15131f;
+    color: var(--cal-text);
+    font: inherit;
+}
+.cal-page select:focus,
+.cal-page input:focus { outline: 2px solid var(--cal-accent); outline-offset: 1px; }
+
+/* card + form */
+.cal-card {
+    background: var(--cal-bg-card);
+    border: 1px solid var(--cal-border);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 640px;
+}
+.cal-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.cal-field label { font-weight: 600; }
+.cal-check label { display: flex; align-items: center; gap: 8px; font-weight: 400; }
+.cal-error { color: var(--cal-danger); }
+.cal-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+
+/* table */
+.cal-table-wrap {
+    overflow-x: auto;
+    background: var(--cal-bg-card);
+    border: 1px solid var(--cal-border);
+    border-radius: 16px;
+}
+.cal-table { width: 100%; border-collapse: collapse; }
+.cal-table th,
+.cal-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--cal-border); }
+.cal-table th { color: var(--cal-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; }
+.cal-table tbody tr:last-child td { border-bottom: 0; }
+.cal-table tbody tr:hover { background: rgba(139,108,240,.07); }
+.cal-past { opacity: .55; }
+.cal-empty { text-align: center !important; color: var(--cal-muted); padding: 40px 16px !important; }
+.cal-col-actions { white-space: nowrap; text-align: right !important; }
+
+/* badges */
+.cal-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: .8rem;
+    background: var(--cal-accent-soft);
+    color: #d8ccff;
+}
+.cal-badge-yes { background: rgba(63,178,127,.18); color: #7be0b3; }
+.cal-badge-no  { background: rgba(229,84,107,.15); color: #ff8fa1; }
+
+/* details (view page) */
+.cal-details { display: grid; grid-template-columns: 140px 1fr; gap: 14px 16px; margin: 0 0 24px; }
+.cal-details dt { color: var(--cal-muted); }
+.cal-details dd { margin: 0; }
+
+@media (max-width: 640px) {
+    .cal-head { flex-direction: column; align-items: flex-start; }
+    .cal-details { grid-template-columns: 1fr; gap: 4px; }
+}

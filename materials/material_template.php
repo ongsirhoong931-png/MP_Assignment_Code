@@ -89,7 +89,8 @@ if (!isset($m, $errors, $subjects, $classes, $submitLabel)) {
         </label>
 
         <label>Release date
-            <input type="date" name="release_date" value="<?= h($m['release_date'] ?? '') ?>">
+            <input type="date" name="release_date" value="<?= h($m['release_date'] ?? '') ?>"
+       min="<?= h(min(date('Y-m-d'), $m['release_date'] ?: date('Y-m-d'))) ?>">
         </label>
 
         <label class="material-check">
@@ -102,6 +103,21 @@ if (!isset($m, $errors, $subjects, $classes, $submitLabel)) {
             <a class="button button-outline" href="<?= h(url('materials/index.php')) ?>">Cancel</a>
         </div>
     </form>
+
+    <!-- Input dialog for Link / Image / Video / Formula / Template (replaces browser prompt()) -->
+    <div id="ed-modal" class="ed-modal" hidden>
+        <div class="ed-modal-box" role="dialog" aria-modal="true">
+            <p id="ed-modal-title"></p>
+            <input type="text" id="ed-modal-input" autocomplete="off">
+            <label class="ed-block" id="ed-modal-blockwrap" hidden>
+                <input type="checkbox" id="ed-modal-block"> Block formula (own line)
+            </label>
+            <div class="ed-modal-actions">
+                <button type="button" id="ed-modal-ok" class="button">OK</button>
+                <button type="button" id="ed-modal-cancel" class="button button-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -112,13 +128,71 @@ if (!isset($m, $errors, $subjects, $classes, $submitLabel)) {
     var typeSel = document.getElementById('content_type');
     var templates = <?= json_encode(mat_templates(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
 
-    function run(cmd, val) {
+    var modal   = document.getElementById('ed-modal');
+    var mTitle  = document.getElementById('ed-modal-title');
+    var mInput  = document.getElementById('ed-modal-input');
+    var mBlockW = document.getElementById('ed-modal-blockwrap');
+    var mBlock  = document.getElementById('ed-modal-block');
+    var mOk     = document.getElementById('ed-modal-ok');
+    var mCancel = document.getElementById('ed-modal-cancel');
+    var onOk = null;
+    var savedRange = null;
+
+    /* ---- remember where the cursor / selection was in the editor ---- */
+    function saveSel() {
+        var s = window.getSelection();
+        if (s.rangeCount && editor.contains(s.anchorNode)) {
+            savedRange = s.getRangeAt(0).cloneRange();
+        }
+    }
+    function restoreSel() {
         editor.focus();
-        document.execCommand(cmd, false, val || null);
+        if (savedRange) {
+            var s = window.getSelection();
+            s.removeAllRanges();
+            s.addRange(savedRange);
+        }
     }
 
+    function run(cmd, val) {
+        restoreSel();
+        document.execCommand(cmd, false, val || null);
+        saveSel();
+    }
+
+    /* ---- small dialog (works even if the browser blocks prompt()) ---- */
+    function ask(title, placeholder, showBlock, cb, confirmOnly) {
+        mTitle.textContent = title;
+        mInput.value = '';
+        mInput.placeholder = placeholder || '';
+        mInput.hidden = !!confirmOnly;
+        mBlockW.hidden = !showBlock;
+        mBlock.checked = false;
+        onOk = cb;
+        modal.hidden = false;
+        if (confirmOnly) { mOk.focus(); } else { mInput.focus(); }
+    }
+    function closeModal() { modal.hidden = true; onOk = null; }
+    function submitModal() {
+        var v = mInput.value.trim();
+        var block = mBlock.checked;
+        var cb = onOk;
+        var confirmOnly = mInput.hidden;
+        closeModal();
+        if (cb && (confirmOnly || v !== '')) { cb(v, block); }
+    }
+    mOk.addEventListener('click', submitModal);
+    mCancel.addEventListener('click', closeModal);
+    modal.addEventListener('mousedown', function (e) { if (e.target === modal) { closeModal(); } });
+    mInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); submitModal(); }
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) { closeModal(); }
+    });
+
     function esc(u) {
-        return u.replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        return u.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     }
 
     function embedHtml(url) {
@@ -139,35 +213,53 @@ if (!isset($m, $errors, $subjects, $classes, $submitLabel)) {
         return '';
     }
 
+    // keep the selection when a toolbar button is pressed
+    editor.addEventListener('keyup', saveSel);
+    editor.addEventListener('mouseup', saveSel);
+    editor.addEventListener('blur', saveSel);
+
     document.querySelectorAll('.editor-toolbar [data-cmd]').forEach(function (b) {
-        b.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keep text selection
+        b.addEventListener('mousedown', function (e) { saveSel(); e.preventDefault(); });
         b.addEventListener('click', function () {
             var c = b.dataset.cmd;
 
             if (c === 'link') {
-                var u = prompt('Link URL (https://...)');
-                if (u) { run('createLink', u); }
+                ask('Link URL (https://...)', 'https://', false, function (u) {
+                    restoreSel();
+                    var sel = window.getSelection();
+                    if (sel.isCollapsed) {
+                        // nothing selected: insert the link with its own address as text
+                        run('insertHTML', '<a href="' + esc(u) + '">' + esc(u) + '</a>');
+                    } else {
+                        run('createLink', u);
+                    }
+                });
             } else if (c === 'image') {
-                var i = prompt('Image URL (https://...)');
-                if (i) { run('insertImage', i); }
+                ask('Image URL (https://...)', 'https://example.com/picture.png', false, function (u) {
+                    run('insertImage', u);
+                });
             } else if (c === 'media') {
-                var v = prompt('YouTube / Vimeo link, or a direct .mp4 / .webm / .mp3 / .wav / .ogg link');
-                if (v) {
-                    var html = embedHtml(v.trim());
+                ask('YouTube / Vimeo link, or a direct .mp4 / .webm / .mp3 / .wav / .ogg link', 'https://youtu.be/...', false, function (u) {
+                    var html = embedHtml(u);
                     if (html) { run('insertHTML', html); }
-                    else { alert('Link type not supported.'); }
-                }
+                    else { ask('Link type not supported. Use YouTube, Vimeo or a direct media file.', '', false, null, true); }
+                });
             } else if (c === 'formula') {
-                var t = prompt('LaTeX formula, e.g. x^2 + y^2 = z^2');
-                if (t) {
-                    var block = confirm('OK = block formula, Cancel = inline formula');
+                ask('LaTeX formula, e.g. x^2 + y^2 = z^2', 'x^2 + y^2 = z^2', true, function (t, block) {
                     run('insertText', block ? '$$' + t + '$$' : '\\(' + t + '\\)');
-                }
+                });
             } else if (c === 'template') {
                 var tpl = templates[typeSel.value];
-                if (!tpl) { alert('No template for this material type.'); return; }
-                if (editor.innerText.trim() !== '' && !confirm('Replace the current content with the template?')) { return; }
-                editor.innerHTML = tpl;
+                if (!tpl) {
+                    ask('No template for this material type.', '', false, null, true);
+                    return;
+                }
+                var apply = function () { editor.innerHTML = tpl; };
+                if (editor.innerText.trim() !== '') {
+                    ask('Replace the current content with the template?', '', false, apply, true);
+                } else {
+                    apply();
+                }
             } else if (c === 'formatBlock') {
                 run('formatBlock', '<' + b.dataset.val + '>');
             } else {

@@ -109,6 +109,16 @@ require __DIR__ . '/includes/header.php';
             Timetable Management
         </a>
 
+         <a href="materials/index.php" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
+            <span>▦</span>
+            Study Meterial
+        </a>
+
+         <a href="calender/index.php" class="preview-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: background 0.2s ease;">
+            <span>▦</span>
+            Holiday List
+        </a>
+
     </div>
 
 </section>

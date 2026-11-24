@@ -693,10 +693,11 @@ function am_check_day(PDO $pdo, string $classId, string $date): ?string
         return 'Attendance cannot be recorded for a future date.';
     }
 
-    if (!am_is_admin() && am_non_tuition_day($pdo, $date)) {
-        return 'That date is not a tuition day. Ask an admin to use '
-            . 'Admin Override if a record is really needed.';
-    }
+   if (!am_is_admin() && ($off = am_non_tuition_day($pdo, $date))) {
+    return 'That date is a non-school day (' . $off['day_type'] . ': '
+        . $off['description'] . '). Ask an admin to use '
+        . 'Admin Override if a record is really needed.';
+}
 
     return null;
 }

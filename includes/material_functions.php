@@ -81,15 +81,10 @@ function mat_require_role(array $roles): void
     allow_roles(...$roles);   // shared check from includes/role_check.php
 }
 
-// admin: everything. staff: only materials they created.
 function mat_can_manage(array $m): bool
 {
-    if (mat_role() === 'admin') {
-        return true;
-    }
     return mat_role() === 'staff'
-        && mat_staff_id() !== null
-        && $m['created_by_staff_id'] === mat_staff_id();
+        && mat_staff_teaches($m['subject_id'] ?? null, $m['class_id'] ?? null);
 }
 
 function mat_student_class(): ?string
@@ -104,12 +99,33 @@ function mat_student_class(): ?string
     return $stmt->fetchColumn() ?: null;
 }
 
-// admin/staff see everything. student: published + released + own class only.
+function mat_staff_teaches(?string $subjectId, ?string $classId = null): bool
+{
+    $sid = mat_staff_id();
+    if (!$sid || !$subjectId) {
+        return false;
+    }
+    $sql = 'SELECT COUNT(*) FROM timetable_schedules
+            WHERE assigned_staff_id = ? AND subject_id = ?';
+    $params = [$sid, $subjectId];
+    if ($classId) {
+        $sql .= ' AND class_id = ?';
+        $params[] = $classId;
+    }
+    $stmt = mat_pdo()->prepare($sql);
+    $stmt->execute($params);
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+
 function mat_can_view(array $m): bool
 {
     $role = mat_role();
-    if ($role === 'admin' || $role === 'staff') {
+    if ($role === 'admin') {
         return true;
+    }
+    if ($role === 'staff') {
+        return mat_staff_teaches($m['subject_id'] ?? null, $m['class_id'] ?? null);
     }
     if ($role !== 'student') {
         return false;
@@ -146,7 +162,7 @@ function mat_load_for_manage(string $id): array
     }
     if (!mat_can_manage($m)) {
         http_response_code(403);
-        exit('You can only manage your own materials.');
+        exit('You can only manage materials for subjects you teach.');
     }
     return $m;
 }
@@ -189,6 +205,43 @@ function mat_details(string $id): array
 function mat_form_options(): array
 {
     $pdo = mat_pdo();
+
+    if (mat_role() === 'staff') {
+        $sid = mat_staff_id();
+
+        $stmt = $pdo->prepare(
+            'SELECT DISTINCT s.subject_id, s.subject_name, s.subject_code
+             FROM timetable_schedules ts
+             JOIN subjects s ON s.subject_id = ts.subject_id
+             WHERE ts.assigned_staff_id = ?
+             ORDER BY s.subject_name'
+        );
+        $stmt->execute([$sid]);
+        $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmt = $pdo->prepare(
+            'SELECT c.class_id, c.grade_level, c.section, ts.subject_id
+             FROM timetable_schedules ts
+             JOIN classes c ON c.class_id = ts.class_id
+             WHERE ts.assigned_staff_id = ?
+             ORDER BY c.class_id'
+        );
+        $stmt->execute([$sid]);
+
+        $classes = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $id = $r['class_id'];
+            if (!isset($classes[$id])) {
+                $classes[$id] = [
+                    'class_id' => $id, 'grade_level' => $r['grade_level'],
+                    'section' => $r['section'], 'subject_ids' => [],
+                ];
+            }
+            $classes[$id]['subject_ids'][] = $r['subject_id'];
+        }
+        return [$subjects, array_values($classes)];
+    }
+
     $subjects = $pdo->query('SELECT subject_id, subject_name, subject_code FROM subjects ORDER BY subject_name')->fetchAll(PDO::FETCH_ASSOC);
     $classes  = $pdo->query('SELECT class_id, grade_level, section FROM classes ORDER BY class_id')->fetchAll(PDO::FETCH_ASSOC);
     return [$subjects, $classes];
@@ -218,7 +271,7 @@ function mat_default(): array
 }
 
 // read + validate the create/edit form. Returns [data, errors]
-function mat_read_post(): array
+function mat_read_post(?string $originalDate = null): array
 {
     $pdo = mat_pdo();
     check_csrf();
@@ -253,13 +306,20 @@ function mat_read_post(): array
         $errors[] = 'Please choose a class.';
     }
 
-    if ($m['release_date'] === '') {
+        if ($m['release_date'] === '') {
         $m['release_date'] = null;
     } else {
         $d = DateTime::createFromFormat('Y-m-d', $m['release_date']);
         if (!$d || $d->format('Y-m-d') !== $m['release_date']) {
             $errors[] = 'Release date is invalid.';
+        } elseif ($m['release_date'] < date('Y-m-d') && $m['release_date'] !== $originalDate) {
+            $errors[] = 'Release date cannot be earlier than today.';
         }
+    }
+
+    if ($m['subject_id'] !== '' && $m['class_id'] !== ''
+        && !mat_staff_teaches($m['subject_id'], $m['class_id'])) {
+        $errors[] = 'You can only add materials for a subject and class you teach.';
     }
 
     return [$m, $errors];
@@ -472,7 +532,7 @@ function mat_css(): void
 }
 
 // sends the file to the browser after a permission check
-function mat_handle_download(string $attachmentId): void
+function mat_handle_download(string $attachmentId, bool $inline = false): void
 {
     $pdo = mat_pdo();
 
@@ -488,17 +548,34 @@ function mat_handle_download(string $attachmentId): void
 
     $full = realpath(__DIR__ . '/../' . ($a['file_path'] ?? ''));
     $root = realpath(__DIR__ . '/../uploads/materials');
-
-    // only serve files that really live inside uploads/materials
     if (!$full || !$root || strpos($full, $root) !== 0 || !is_file($full)) {
         http_response_code(404);
         exit('File is missing on the server. Please ask your tutor to upload it again.');
     }
 
+    $ext = strtolower(pathinfo($full, PATHINFO_EXTENSION));
+    $mimes = [
+        'pdf' => 'application/pdf', 'png' => 'image/png', 'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg', 'txt' => 'text/plain; charset=utf-8', 'zip' => 'application/zip',
+        'doc' => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls' => 'application/vnd.ms-excel',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt' => 'application/vnd.ms-powerpoint',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+    $canInline   = in_array($ext, ['pdf', 'png', 'jpg', 'jpeg', 'txt'], true);
+    $disposition = ($inline && $canInline) ? 'inline' : 'attachment';
     $downloadName = preg_replace('/[^A-Za-z0-9._ -]/', '_', $a['file_name']);
 
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename="' . $downloadName . '"');
+    // discard anything already printed (stray space / BOM / warning) so the file stays clean
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    @ini_set('zlib.output_compression', '0');
+
+    header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
+    header('Content-Disposition: ' . $disposition . '; filename="' . $downloadName . '"');
     header('Content-Length: ' . filesize($full));
     header('X-Content-Type-Options: nosniff');
     readfile($full);
@@ -548,10 +625,35 @@ function mat_subjects_for_user(): array
          ORDER BY s.subject_name'
     )->fetchAll(PDO::FETCH_ASSOC);
 
+        if (mat_role() === 'staff') {
+        $sid = mat_staff_id();
+        $stmt = $pdo->prepare(
+            "SELECT s.subject_id, s.subject_name, s.subject_code,
+                    COUNT(DISTINCT sm.material_id) AS material_count,
+                    GROUP_CONCAT(DISTINCT CONCAT(c.grade_level, ' ', c.section)
+                                 ORDER BY c.grade_level, c.section SEPARATOR ', ') AS class_names
+             FROM timetable_schedules ts
+             JOIN subjects s ON s.subject_id = ts.subject_id
+             JOIN classes c ON c.class_id = ts.class_id
+             LEFT JOIN study_materials sm
+                    ON sm.subject_id = ts.subject_id
+                   AND (sm.class_id = ts.class_id OR sm.class_id IS NULL)
+             WHERE ts.assigned_staff_id = ?
+             GROUP BY s.subject_id, s.subject_name, s.subject_code
+             ORDER BY s.subject_name"
+        );
+        $stmt->execute([$sid]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!$rows) {
+            return [[], 'You are not assigned to any subject in the timetable yet. Please contact the administrator.'];
+        }
+        return [$rows, null];
+    }
+
     return [$rows, null];
 }
 
-// Materials of one subject that the current user is allowed to see.
 function mat_list(string $subjectId): array
 {
     $pdo = mat_pdo();
@@ -568,6 +670,15 @@ function mat_list(string $subjectId): array
                   AND (sm.class_id = ? OR sm.class_id IS NULL)
                   AND (sm.release_date IS NULL OR sm.release_date <= CURDATE())';
         $params[] = mat_student_class();
+    }
+
+    if (mat_role() === 'staff') {
+        $sql .= ' AND EXISTS (
+                      SELECT 1 FROM timetable_schedules ts
+                      WHERE ts.subject_id = sm.subject_id
+                        AND ts.assigned_staff_id = ?
+                        AND (sm.class_id IS NULL OR ts.class_id = sm.class_id))';
+        $params[] = mat_staff_id();
     }
 
     $sql .= ' ORDER BY sm.release_date DESC, sm.material_id DESC';
