@@ -24,6 +24,7 @@ function site_language_widget(): string
         .site-lang a { padding: 5px 9px; border-radius: 7px; font-size: 13px;
             color: var(--text, #ffffff); text-decoration: none; }
         .site-lang a.active { background: var(--accent-dark, #2563eb); color: #ffffff; }
+                .site-lang.in-header { position: static; }
         #google_translate_element, iframe.skiptranslate,
         .goog-te-banner-frame { display: none !important; }
         body { top: 0 !important; }
@@ -44,6 +45,12 @@ function site_language_widget(): string
 
     $html .= '<script>
 (function () {
+    var box = document.querySelector(".header-actions");
+    var bar = document.querySelector(".site-lang");
+    if (box && bar) {                   // sit inside the navbar, before Profile
+        box.insertBefore(bar, box.firstChild);
+        bar.classList.add("in-header");
+    }
     var target = ' . json_encode($target) . ';
     var expire = "; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
 
