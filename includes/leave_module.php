@@ -723,7 +723,6 @@ function lv_nav(string $active = ''): void
     }
 
     echo '</nav>';
-    echo lang_switcher();
     echo '</div>';
 
     am_show_flash();
