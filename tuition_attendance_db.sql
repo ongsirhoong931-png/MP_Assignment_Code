@@ -576,3 +576,150 @@ CREATE TABLE IF NOT EXISTS leave_application_log (
     INDEX idx_leave_log_leave (leave_id, acted_at),
     INDEX idx_leave_log_applicant (applicant_id, applicant_type)
 ) ENGINE=InnoDB;
+
+
+-- ==========================================================
+-- EXTRA SEED DATA: every table has at least 3 rows
+-- ==========================================================
+
+-- 6. STUDENT ENROLMENTS
+INSERT IGNORE INTO student_enrolments (enrolment_id, student_id, class_id) VALUES
+(1, 'STU001', 'CLS001'),
+(2, 'STU002', 'CLS001'),
+(3, 'STU004', 'CLS002');
+
+
+-- 8. ACADEMIC CALENDAR
+INSERT IGNORE INTO academic_calendar_overrides (override_id, `date`, day_type, description, is_tuition_day) VALUES
+('HOL001', '2027-02-05', 'Public Holiday', 'chinese new year', 0),
+('HOL002', '2026-12-25', 'Public Holiday', 'Christmas Day', 0),
+('HOL003', '2026-12-31', 'Centre Closure', 'Year-end centre closure', 0);
+
+
+-- 9. LEAVE APPLICATIONS
+INSERT IGNORE INTO leave_applications
+(leave_id, applicant_id, applicant_type, leave_type, start_date, end_date, reason, status, approved_by_id, attachment_path) VALUES
+('LEA001', 'STU003', 'Student', 'Medical Leave', '2026-11-23', '2026-11-23', 'Fever', 'Approved', 'STF001', 'uploads/leave/mc_stu003.pdf'),
+('LEA002', 'STU004', 'Student', 'Medical Leave', '2026-12-01', '2026-12-02', 'Dental appointment', 'Pending', NULL, 'uploads/leave/mc_stu004.pdf'),
+('LEA003', 'STU005', 'Student', 'Personal Leave', '2026-11-30', '2026-11-30', 'Family event', 'Rejected', 'ADM001', NULL);
+
+
+-- 10. ATTENDANCE TABLES
+INSERT IGNORE INTO attendance (attendance_id, student_id, class_id, attendance_date, status) VALUES
+(1, 'STU001', 'CLS001', '2026-11-23', 'Present'),
+(2, 'STU002', 'CLS001', '2026-11-23', 'Late'),
+(3, 'STU003', 'CLS001', '2026-11-23', 'Excused');
+
+INSERT IGNORE INTO attendance_records
+(attendance_id, student_id, class_id, `date`, status, schedule_id, marked_by_staff_id) VALUES
+('ATT001', 'STU001', 'CLS001', '2026-11-23', 'Present', 'SCH001', 'STF001'),
+('ATT002', 'STU002', 'CLS001', '2026-11-23', 'Late',    'SCH001', 'STF001'),
+('ATT003', 'STU003', 'CLS001', '2026-11-23', 'Excused', 'SCH001', 'STF001');
+
+
+-- 11. STUDY MATERIALS
+INSERT IGNORE INTO study_materials
+(material_id, title, description, subject_id, class_id, created_by_staff_id, content_type, rich_text_content, is_published, release_date) VALUES
+('MAT001', 'Chapter 1 Notes: Introduction to IT', 'Revision notes for Chapter 1', 'SUB001', 'CLS001', 'STF001', 'Lesson Note', '<p>Introduction to information technology: hardware, software and networks.</p>', 1, '2026-11-20'),
+('MAT002', 'Assignment 1: Simple Web Page', 'Build a simple HTML and CSS page', 'SUB002', 'CLS002', 'STF002', 'Assignment Brief', '<p>Create a personal profile page using HTML5 and CSS3.</p>', 1, '2026-11-21'),
+('MAT003', 'Database Key Terms', 'Flashcards for primary key, foreign key and normalisation', 'SUB003', 'CLS003', 'STF003', 'Study Card Set', '<p>Primary key, foreign key, 1NF, 2NF and 3NF.</p>', 0, '2026-12-01');
+
+
+-- 12. MATERIAL ATTACHMENTS
+INSERT IGNORE INTO material_attachments (attachment_id, material_id, file_name, file_type, file_path) VALUES
+('MATT001', 'MAT001', 'chapter1_notes.pdf',   'PDF',  'uploads/materials/chapter1_notes.pdf'),
+('MATT002', 'MAT002', 'assignment1_brief.pdf', 'PDF',  'uploads/materials/assignment1_brief.pdf'),
+('MATT003', 'MAT003', 'db_flashcards.zip',     'ZIP',  'uploads/materials/db_flashcards.zip');
+
+
+-- 14. PASSWORD RESET TOKENS (user_id is looked up, so it works with any user IDs)
+INSERT IGNORE INTO password_reset_tokens (id, user_id, token_hash, expires_at, used_at)
+SELECT 1, user_id, SHA2('demo-reset-token-1', 256), '2026-12-31 23:59:59', NULL
+FROM user_accounts WHERE username = 'admin123';
+
+INSERT IGNORE INTO password_reset_tokens (id, user_id, token_hash, expires_at, used_at)
+SELECT 2, user_id, SHA2('demo-reset-token-2', 256), '2026-12-31 23:59:59', NULL
+FROM user_accounts WHERE username = 'staff123';
+
+INSERT IGNORE INTO password_reset_tokens (id, user_id, token_hash, expires_at, used_at)
+SELECT 3, user_id, SHA2('demo-reset-token-3', 256), '2026-11-20 23:59:59', '2026-11-20 10:30:00'
+FROM user_accounts WHERE username = 'student123';
+
+
+-- 15. ANNOUNCEMENTS
+INSERT IGNORE INTO announcements
+(announcement_id, title, body, audience, class_id, created_by_admin_id, created_by_staff_id, published_at) VALUES
+(1, 'Welcome to EDUVEX Academy', 'Welcome to the new semester. Please check your timetable.', 'all', NULL, 'ADM001', NULL, '2026-11-20 09:00:00'),
+(2, 'Class Schedule Reminder', 'Year 1 A: Monday class starts at 8:00 AM in room DKABA.', 'student', 'CLS001', NULL, 'STF001', '2026-11-21 10:00:00'),
+(3, 'Staff Meeting', 'All staff meeting this Friday at 3:00 PM.', 'staff', NULL, 'ADM001', NULL, '2026-11-22 08:30:00');
+
+
+-- 16. ANNOUNCEMENT READS (user_id is looked up)
+INSERT IGNORE INTO announcement_reads (announcement_id, user_id)
+SELECT 1, user_id FROM user_accounts
+WHERE username IN ('admin123', 'staff123', 'student123');
+
+
+-- 17. ATTENDANCE LESSONS
+INSERT IGNORE INTO attendance_lessons
+(lesson_id, schedule_id, class_id, teacher_id, lesson_date, starts_at, ends_at, topic) VALUES
+(1, 'SCH001', 'CLS001', 'STF001', '2026-11-23', '2026-11-23 08:00:00', '2026-11-23 10:00:00', 'Introduction to IT'),
+(2, 'SCH002', 'CLS002', 'STF002', '2026-11-24', '2026-11-24 10:00:00', '2026-11-24 12:00:00', 'HTML Basics'),
+(3, 'SCH003', 'CLS003', 'STF003', '2026-11-25', '2026-11-25 09:00:00', '2026-11-25 11:00:00', 'Database Keys');
+
+
+-- 18. ATTENDANCE SESSIONS
+INSERT IGNORE INTO attendance_sessions
+(session_id, lesson_id, attendance_code, status, generated_by_staff_id, opened_at, closed_at) VALUES
+(1, 1, 'A1B2C3', 'closed', 'STF001', '2026-11-23 08:00:00', '2026-11-23 08:30:00'),
+(2, 2, 'D4E5F6', 'closed', 'STF002', '2026-11-24 10:00:00', '2026-11-24 10:30:00'),
+(3, 3, 'G7H8J9', 'closed', 'STF003', '2026-11-25 09:00:00', '2026-11-25 09:30:00');
+
+
+-- 19. ATTENDANCE SUBMISSIONS
+INSERT IGNORE INTO attendance_submissions
+(submission_id, session_id, student_id, attendance_status, attendance_method) VALUES
+(1, 1, 'STU001', 'Present', 'code'),
+(2, 1, 'STU002', 'Late',    'code'),
+(3, 1, 'STU003', 'Present', 'code');
+
+
+-- 20. ATTENDANCE ATTEMPTS
+INSERT IGNORE INTO attendance_attempts (attempt_id, student_id, session_id, attendance_method) VALUES
+(1, 'STU001', 1, 'code'),
+(2, 'STU002', 1, 'code'),
+(3, 'STU003', 1, 'code');
+
+
+-- ATTENDANCE AUDIT LOG (acted_by_user_id is looked up)
+INSERT IGNORE INTO attendance_audit_log
+(log_id, action, attendance_id, student_id, class_id, `date`, old_status, new_status, reason, acted_by_user_id, acted_by_role)
+SELECT 1, 'mark', 'ATT001', 'STU001', 'CLS001', '2026-11-23', NULL, 'Present', 'Marked present', user_id, 'staff'
+FROM user_accounts WHERE username = 'staff123';
+
+INSERT IGNORE INTO attendance_audit_log
+(log_id, action, attendance_id, student_id, class_id, `date`, old_status, new_status, reason, acted_by_user_id, acted_by_role)
+SELECT 2, 'update', 'ATT002', 'STU002', 'CLS001', '2026-11-23', 'Absent', 'Late', 'Student arrived late', user_id, 'staff'
+FROM user_accounts WHERE username = 'staff123';
+
+INSERT IGNORE INTO attendance_audit_log
+(log_id, action, attendance_id, student_id, class_id, `date`, old_status, new_status, reason, acted_by_user_id, acted_by_role)
+SELECT 3, 'override', 'ATT003', 'STU003', 'CLS001', '2026-11-23', 'Absent', 'Excused', 'Approved medical leave', user_id, 'admin'
+FROM user_accounts WHERE username = 'admin123';
+
+
+-- LEAVE APPLICATION LOG (acted_by_user_id is looked up)
+INSERT IGNORE INTO leave_application_log
+(log_id, leave_id, action, applicant_id, applicant_type, start_date, end_date, note, acted_by_user_id, acted_by_role)
+SELECT 1, 'LEA001', 'submit', 'STU003', 'Student', '2026-11-23', '2026-11-23', 'Leave submitted with MC', user_id, 'student'
+FROM user_accounts WHERE username = 'student123';
+
+INSERT IGNORE INTO leave_application_log
+(log_id, leave_id, action, applicant_id, applicant_type, start_date, end_date, note, acted_by_user_id, acted_by_role)
+SELECT 2, 'LEA001', 'approve', 'STU003', 'Student', '2026-11-23', '2026-11-23', 'MC verified', user_id, 'staff'
+FROM user_accounts WHERE username = 'staff123';
+
+INSERT IGNORE INTO leave_application_log
+(log_id, leave_id, action, applicant_id, applicant_type, start_date, end_date, note, acted_by_user_id, acted_by_role)
+SELECT 3, 'LEA003', 'reject', 'STU005', 'Student', '2026-11-30', '2026-11-30', 'No supporting document', user_id, 'admin'
+FROM user_accounts WHERE username = 'admin123';
