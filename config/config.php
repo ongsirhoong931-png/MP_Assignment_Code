@@ -8,8 +8,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-
-
 defined('ATTENDANCE_SECRET') ||
     define(
         'ATTENDANCE_SECRET',

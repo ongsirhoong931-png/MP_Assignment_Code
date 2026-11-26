@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/site_language.php';
 
 $role = logged_in() ? (string) me()['role'] : '';
 
@@ -17,6 +18,17 @@ $items = [
 ];
 
 // ========================================
+// ADMIN ACCOUNT APPROVALS (Moved to Top for visibility)
+// ========================================
+if ($role === 'admin') {
+    $items[] = [
+        'Account Approvals',
+        'admin/approve_accounts.php',
+        '✓'
+    ];
+}
+
+// ========================================
 // ADMIN AND STAFF NAVIGATION
 // ========================================
 if ($role === 'admin' || $role === 'staff') {
@@ -27,7 +39,7 @@ if ($role === 'admin' || $role === 'staff') {
         '♙'
     ];
 
-    // Admin-only Management modules right under Students
+    // Admin-only Management modules
     if ($role === 'admin') {
         $items[] = [
             'Admin Management',

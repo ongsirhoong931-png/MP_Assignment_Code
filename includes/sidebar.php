@@ -9,8 +9,15 @@ require_once __DIR__ . '/functions.php';
     </a>
 
     <?php if (me()['role'] === 'admin'): ?>
+        <a href="<?= h(url('admin_management/index.php')) ?>">
+            Admin Management
+        </a>
         <a href="<?= h(url('tutor_management/index.php')) ?>">
             Tutor Management
+        </a>
+        <!-- Account Approvals formatted to match your exact CSS structure -->
+        <a href="<?= h(url('admin/approve_accounts.php')) ?>">
+            Account Approvals
         </a>
     <?php endif; ?>
 
@@ -25,7 +32,5 @@ require_once __DIR__ . '/functions.php';
     <a href="<?= h(url('class_management/timetable.php')) ?>">
         Timetable
     </a>
-
-    
 
 </aside>

@@ -1,4 +1,3 @@
-
 <?php
 // ==========================================
 // EDUVEX ACADEMY - LOGIN PAGE
@@ -133,12 +132,19 @@ require __DIR__ . '/../includes/header.php';
 
     </form>
 
-    <!-- Forgot Password -->
-    <p>
-        <a href="<?= h(url('auth/forgot_password.php')) ?>">
-            Forgot Password?
-        </a>
-    </p>
+    <!-- Additional Authentication Links (Swapped Order) -->
+    <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="margin: 0;">
+            <a href="<?= h(url('auth/register.php')) ?>">
+                Register Account
+            </a>
+        </p>
+        <p style="margin: 0;">
+            <a href="<?= h(url('auth/forgot_password.php')) ?>">
+                Forgot Password?
+            </a>
+        </p>
+    </div>
 
 </section>
 
