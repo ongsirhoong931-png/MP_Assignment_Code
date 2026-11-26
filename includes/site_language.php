@@ -17,7 +17,7 @@ function site_language_widget(): string
     $target = SITE_TRANSLATE_CODES[$current] ?? '';
 
     $html = '<style>
-        .site-lang { position: fixed; right: 14px; bottom: 14px; z-index: 9999;
+        .site-lang { position: fixed; right: 14px; top: 12px; z-index: 9999;
             display: flex; gap: 6px; padding: 6px; border-radius: 10px;
             background: var(--surface, #1b1f2a);
             border: 1px solid var(--line, #3a4052); }
@@ -50,12 +50,6 @@ function site_language_widget(): string
     if (!target) {                      // English: no translation
         document.cookie = "googtrans=" + expire;
         return;
-    }
-
-    // Module 6 pages are already in the chosen language: leave them alone.
-    if (location.pathname.indexOf("/leave/") !== -1) {
-        var main = document.querySelector("main");
-        if (main) { main.classList.add("notranslate"); }
     }
 
     document.cookie = "googtrans=/en/" + target + "; path=/";
