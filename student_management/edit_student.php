@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/role_check.php';
@@ -24,9 +23,9 @@ if (!$student) {
 }
 
 $classes = $pdo->query("
-    SELECT class_id, class_name
+    SELECT class_id, grade_level, section
     FROM classes
-    ORDER BY class_name
+    ORDER BY grade_level, section
 ")->fetchAll();
 
 $errors = [];
@@ -124,66 +123,77 @@ $pageTitle = 'Edit Student';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<h1>Edit Student</h1>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h1 style="margin: 0;">Edit Student</h1>
+        <p style="margin: 4px 0 0 0;">Update student profile and academic class assignment.</p>
+    </div>
+    <a href="<?= h(url('student_management/view_student.php?id=' . urlencode($id))) ?>" class="button button-outline">
+        Back to Student
+    </a>
+</div>
 
-<?php foreach ($errors as $error): ?>
-    <p class="error"><?= h($error) ?></p>
-<?php endforeach; ?>
+<div style="max-width: 600px; margin: 0 auto;">
+    <?php foreach ($errors as $error): ?>
+        <p class="error" style="text-align: center; background: rgba(255,107,107,0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px; color: #ff6b6b;"><?= h($error) ?></p>
+    <?php endforeach; ?>
 
-<section class="panel">
-<form method="post">
+    <section class="panel" style="padding: 28px;">
+    <form method="post">
 
-    <input type="hidden" name="csrf"
-           value="<?= h(csrf()) ?>">
+        <input type="hidden" name="csrf"
+               value="<?= h(csrf()) ?>">
 
-    <input type="hidden" name="student_id"
-           value="<?= h($id) ?>">
+        <input type="hidden" name="student_id"
+               value="<?= h($id) ?>">
 
-    <label>Student ID
-        <input type="text"
-               value="<?= h($id) ?>" disabled>
-    </label>
+        <label>Student ID
+            <input type="text"
+                   value="<?= h($id) ?>" disabled>
+        </label>
 
-    <label>Student Name
-        <input type="text" name="student_name"
-               maxlength="120"
-               value="<?= h($student['student_name']) ?>"
-               required>
-    </label>
+        <label>Student Name
+            <input type="text" name="student_name"
+                   maxlength="120"
+                   value="<?= h($student['student_name']) ?>"
+                   required>
+        </label>
 
-    <label>Email
-        <input type="email" name="student_email"
-               maxlength="180"
-               value="<?= h($student['student_email']) ?>">
-    </label>
+        <label>Email
+            <input type="email" name="student_email"
+                   maxlength="180"
+                   value="<?= h($student['student_email']) ?>">
+        </label>
 
-    <label>Phone Number
-        <input type="text" name="student_phone_number"
-               maxlength="30"
-               value="<?= h($student['student_phone_number']) ?>">
-    </label>
+        <label>Phone Number
+            <input type="text" name="student_phone_number"
+                   maxlength="30"
+                   value="<?= h($student['student_phone_number']) ?>">
+        </label>
 
-    <label>Primary Class
-        <select name="student_class">
-            <option value="">Not Assigned</option>
+        <label>Primary Class
+            <select name="student_class">
+                <option value="">Not Assigned</option>
 
-            <?php foreach ($classes as $class): ?>
-                <option value="<?= h($class['class_id']) ?>"
-                    <?= $student['student_class'] ===
-                        $class['class_id'] ? 'selected' : '' ?>>
-                    <?= h($class['class_name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </label>
+                <?php foreach ($classes as $class): ?>
+                    <option value="<?= h($class['class_id']) ?>"
+                        <?= $student['student_class'] ===
+                            $class['class_id'] ? 'selected' : '' ?>>
+                        <?= h($class['grade_level'] . ' - ' . $class['section']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
 
-    <button type="submit">Update Student</button>
-
-    <a href="<?= h(url(
-        'student_management/view_student.php?id=' .
-        urlencode($id)
-    )) ?>">Cancel</a>
-</form>
-</section>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" style="flex: 1;">Update Student</button>
+            <a href="<?= h(url(
+                'student_management/view_student.php?id=' .
+                urlencode($id)
+            )) ?>" class="button button-outline" style="flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center;">Cancel</a>
+        </div>
+    </form>
+    </section>
+</div>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>

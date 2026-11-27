@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/functions.php';
-require_once __DIR__ . '/../config/database.php'; // <-- Added database connection
+require_once __DIR__ . '/site_language.php';
+require_once __DIR__ . '/../config/database.php';
 
 $account = logged_in() ? me() : null;
 
@@ -9,7 +10,6 @@ $profileUrl = '#';
 $profileImage = '';
 
 if ($account && isset($pdo)) {
-    // Fetch latest profile image from database safely
     $stmt = $pdo->prepare("SELECT profile_image FROM user_accounts WHERE user_id = ?");
     $stmt->execute([$account['id']]);
     $profileImage = $stmt->fetchColumn();
@@ -24,11 +24,9 @@ if ($role === 'admin') {
     $profileUrl = url('student_management/view_student.php?id=' . urlencode($studentId));
 }
 ?>
-
 <header class="site-header">
 
     <div class="header-brand">
-
         <button
             class="menu-toggle"
             type="button"
@@ -36,27 +34,32 @@ if ($role === 'admin') {
             aria-expanded="false"
             aria-controls="floating-navigation"
             data-menu-toggle>
-
             <span aria-hidden="true">☰</span>
-
         </button>
 
-        <a class="brand"
-           href="<?= h(url('index.php')) ?>">
-
+        <a class="brand" href="<?= h(url('index.php')) ?>">
             <span class="brand-mark">🎓</span>
             EDUVEX Academy
-
         </a>
-
     </div>
 
-    <div class="header-actions" style="display: flex; align-items: center; gap: 12px;">
+    <div class="header-actions" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+
+        <!-- Language Selector Widget -->
+        <?= site_language_widget() ?>
+
+        <!-- Independent Box 1: Theme Toggle -->
+        <div class="header-box-item" style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 600; color: var(--text); line-height: 1;">Theme</span>
+            <label class="switch" style="display: inline-flex; align-items: center; margin-bottom: 0;">
+                <input type="checkbox" id="theme-checkbox" onclick="toggleTheme()">
+                <span class="slider"></span>
+            </label>
+        </div>
 
         <?php if ($account): ?>
-
-            <!-- User Profile Button Card -->
-            <a href="<?= h($profileUrl) ?>" class="header-btn-effect">
+            <!-- Independent Box 2: User Profile -->
+            <a href="<?= h($profileUrl) ?>" class="header-box-item header-btn-box-link">
                 <?php if (!empty($profileImage) && file_exists(__DIR__ . '/../' . $profileImage)): ?>
                     <img src="<?= h(url($profileImage)) ?>" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
                 <?php else: ?>
@@ -67,17 +70,14 @@ if ($role === 'admin') {
                 </span>
             </a>
 
-            <!-- Logout Button Card -->
-            <a href="<?= h(url('auth/logout.php')) ?>" class="header-btn-effect">
+            <!-- Independent Box 3: Logout with bright red styling -->
+            <a href="<?= h(url('auth/logout.php')) ?>" class="header-box-item header-btn-box-link header-logout-btn">
                 Logout
             </a>
-
         <?php else: ?>
-
-            <a href="<?= h(url('auth/login.php')) ?>" class="header-btn-effect">
+            <a href="<?= h(url('auth/login.php')) ?>" class="header-box-item header-btn-box-link">
                 Sign In
             </a>
-
         <?php endif; ?>
 
     </div>

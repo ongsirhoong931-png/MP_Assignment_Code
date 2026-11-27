@@ -6,12 +6,9 @@ $role = logged_in() ? (string) me()['role'] : '';
 
 // Determine profile link based on user role
 $profileUrl = '#';
-if ($role === 'admin') {
-    $profileUrl = url('admin/profile.php');
-} elseif ($role === 'staff') {
-    $profileUrl = url('tutor/profile.php');
-} elseif ($role === 'student') {
-    $studentId = me()['student_id'] ?? '';
+if ($role === 'admin') {$profileUrl = url('admin/profile.php');
+} elseif ($role === 'staff') {$profileUrl = url('tutor/profile.php');
+} elseif ($role === 'student') {$studentId = me()['student_id'] ?? '';
     $profileUrl = url('student_management/view_student.php?id=' . urlencode($studentId));
 }
 ?>
@@ -26,7 +23,7 @@ if ($role === 'admin') {
 
     <title>
         <?= h($pageTitle ?? APP_NAME) ?>
-        - <?= h(APP_NAME) ?>
+- <?= h(APP_NAME) ?>
     </title>
 
     <link rel="stylesheet"

@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/role_check.php';
@@ -7,11 +6,17 @@ allow_roles('admin');
 
 $errors = [];
 
-$classes = $pdo->query("
-    SELECT class_id, class_name
-    FROM classes
-    ORDER BY class_name
-")->fetchAll();
+$rawClasses = $pdo->query("SELECT * FROM classes")->fetchAll(PDO::FETCH_ASSOC);
+$classes = [];
+foreach ($rawClasses as $rc) {
+    $classId = $rc['class_id'] ?? array_values($rc)[0];
+    $className = $rc['class_name'] ?? $rc['name'] ?? $rc['title'] ?? $rc['class_title'] ?? $rc['description'] ?? array_values($rc)[1] ?? 'Unnamed Class';
+    
+    $classes[] = [
+        'class_id' => $classId,
+        'class_name' => $className
+    ];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     check_csrf();
@@ -103,63 +108,74 @@ $pageTitle = 'Add Student';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<h1>Add New Student</h1>
-
-<?php foreach ($errors as $error): ?>
-    <p class="error"><?= h($error) ?></p>
-<?php endforeach; ?>
-
-<section class="panel">
-<form method="post">
-
-    <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-
-    <label>Student ID
-        <input type="text" name="student_id"
-               maxlength="12"
-               value="<?= h($_POST['student_id'] ?? '') ?>"
-               placeholder="STU011" required>
-    </label>
-
-    <label>Student Name
-        <input type="text" name="student_name"
-               maxlength="120"
-               value="<?= h($_POST['student_name'] ?? '') ?>"
-               required>
-    </label>
-
-    <label>Email
-        <input type="email" name="student_email"
-               maxlength="180"
-               value="<?= h($_POST['student_email'] ?? '') ?>">
-    </label>
-
-    <label>Phone Number
-        <input type="text" name="student_phone_number"
-               maxlength="30"
-               value="<?= h($_POST['student_phone_number'] ?? '') ?>">
-    </label>
-
-    <label>Assign Class
-        <select name="student_class">
-            <option value="">Not Assigned</option>
-
-            <?php foreach ($classes as $class): ?>
-                <option value="<?= h($class['class_id']) ?>"
-                    <?= ($_POST['student_class'] ?? '') ===
-                        $class['class_id'] ? 'selected' : '' ?>>
-                    <?= h($class['class_name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </label>
-
-    <button type="submit">Save Student</button>
-
-    <a href="<?= h(url('student_management/index.php')) ?>">
-        Cancel
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+        <h1 style="margin: 0;">Add Student</h1>
+        <p style="margin: 4px 0 0 0;">Register a new student into the academy system.</p>
+    </div>
+    <a href="<?= h(url('student_management/index.php')) ?>" class="button button-outline">
+        Back to Students
     </a>
-</form>
-</section>
+</div>
+
+<div style="max-width: 600px; margin: 0 auto;">
+    <?php foreach ($errors as $error): ?>
+        <p class="error" style="text-align: center;"><?= h($error) ?></p>
+    <?php endforeach; ?>
+
+    <section class="panel" style="padding: 28px;">
+    <form method="post">
+
+        <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+
+        <label>Student ID
+            <input type="text" name="student_id"
+                   maxlength="12"
+                   value="<?= h($_POST['student_id'] ?? '') ?>"
+                   placeholder="STU011" required>
+        </label>
+
+        <label>Student Name
+            <input type="text" name="student_name"
+                   maxlength="120"
+                   value="<?= h($_POST['student_name'] ?? '') ?>"
+                   required>
+        </label>
+
+        <label>Email
+            <input type="email" name="student_email"
+                   maxlength="180"
+                   value="<?= h($_POST['student_email'] ?? '') ?>">
+        </label>
+
+        <label>Phone Number
+            <input type="text" name="student_phone_number"
+                   maxlength="30"
+                   value="<?= h($_POST['student_phone_number'] ?? '') ?>">
+        </label>
+
+        <label>Assign Class
+            <select name="student_class">
+                <option value="">Not Assigned</option>
+
+                <?php foreach ($classes as $class): ?>
+                    <option value="<?= h($class['class_id']) ?>"
+                        <?= ($_POST['student_class'] ?? '') ===
+                            $class['class_id'] ? 'selected' : '' ?>>
+                        <?= h($class['class_name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" style="flex: 1;">Save Student</button>
+            <a href="<?= h(url('student_management/index.php')) ?>" class="button button-outline" style="flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center;">
+                Cancel
+            </a>
+        </div>
+    </form>
+    </section>
+</div>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>

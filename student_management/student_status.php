@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/role_check.php';
@@ -71,84 +70,88 @@ $pageTitle = 'Student Account Status';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<h1>Student Login Status</h1>
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="margin-bottom: 24px;">
+        <h1 style="margin: 0;">Student Login Status</h1>
+        <p style="margin: 4px 0 0 0;">Manage student account access and login privileges.</p>
+    </div>
 
-<?php foreach ($errors as $error): ?>
-    <p class="error"><?= h($error) ?></p>
-<?php endforeach; ?>
+    <?php foreach ($errors as $error): ?>
+        <p class="error" style="text-align: center; background: rgba(255,107,107,0.1); padding: 12px; border-radius: 8px; margin-bottom: 16px; color: #ff6b6b;"><?= h($error) ?></p>
+    <?php endforeach; ?>
 
-<section class="panel">
+    <section class="panel" style="padding: 28px;">
 
-    <p><strong>Student ID:</strong>
-        <?= h($student['student_id']) ?></p>
+        <p style="margin-bottom: 16px;"><strong>Student ID:</strong><br><?= h($student['student_id']) ?></p>
 
-    <p><strong>Student Name:</strong>
-        <?= h($student['student_name']) ?></p>
+        <p style="margin-bottom: 16px;"><strong>Student Name:</strong><br><?= h($student['student_name']) ?></p>
 
-    <p><strong>Username:</strong>
-        <?= h($student['username'] ?? 'No Account') ?></p>
+        <p style="margin-bottom: 16px;"><strong>Username:</strong><br><?= h($student['username'] ?? 'No Account') ?></p>
 
-    <p><strong>Current Login Status:</strong>
-
-        <?php
-        if ($student['user_id'] === null) {
-            echo 'No Account';
-        } elseif ($student['is_active']) {
-            echo 'Active';
-        } else {
-            echo 'Inactive';
-        }
-        ?>
-    </p>
-
-    <?php if ($student['user_id'] !== null): ?>
-
-        <form method="post">
-
-            <input type="hidden"
-                   name="csrf"
-                   value="<?= h(csrf()) ?>">
-
-            <input type="hidden"
-                   name="student_id"
-                   value="<?= h($id) ?>">
-
-            <label>Change Login Status
-                <select name="status" required>
-                    <option value="1"
-                        <?= $student['is_active'] ? 'selected' : '' ?>>
-                        Active
-                    </option>
-
-                    <option value="0"
-                        <?= !$student['is_active'] ? 'selected' : '' ?>>
-                        Inactive
-                    </option>
-                </select>
-            </label>
-
-            <button type="submit">
-                Update Status
-            </button>
-
-        </form>
-
-    <?php else: ?>
-
-        <p>
-            Create a login account for this student
-            through User Management before changing
-            the account status.
+        <p style="margin-bottom: 24px;"><strong>Current Login Status:</strong><br>
+            <?php
+            if ($student['user_id'] === null) {
+                echo '<span style="color: #888;">No Account</span>';
+            } elseif ($student['is_active']) {
+                echo '<span style="color: #51cf66;">Active</span>';
+            } else {
+                echo '<span style="color: #ff6b6b;">Inactive</span>';
+            }
+            ?>
         </p>
 
-    <?php endif; ?>
+        <?php if ($student['user_id'] !== null): ?>
 
-    <br>
+            <form method="post">
 
-    <a href="<?= h(url(
-        'student_management/index.php'
-    )) ?>">Back to Student Management</a>
+                <input type="hidden"
+                       name="csrf"
+                       value="<?= h(csrf()) ?>">
 
-</section>
+                <input type="hidden"
+                       name="student_id"
+                       value="<?= h($id) ?>">
+
+                <label style="margin-bottom: 20px; display: block;">Change Login Status
+                    <select name="status" required style="margin-top: 6px;">
+                        <option value="1"
+                            <?= $student['is_active'] ? 'selected' : '' ?>>
+                            Active
+                        </option>
+
+                        <option value="0"
+                            <?= !$student['is_active'] ? 'selected' : '' ?>>
+                            Inactive
+                        </option>
+                    </select>
+                </label>
+
+                <div style="display: flex; gap: 12px; margin-top: 24px;">
+                    <button type="submit" style="flex: 1;">
+                        Update Status
+                    </button>
+                    <a href="<?= h(url('student_management/view_student.php?id=' . urlencode($id))) ?>" class="button button-outline" style="flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center;">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        <?php else: ?>
+
+            <p style="margin-bottom: 24px; opacity: 0.9;">
+                Create a login account for this student
+                through User Management before changing
+                the account status.
+            </p>
+
+            <a href="<?= h(url('student_management/view_student.php?id=' . urlencode($id))) ?>" class="button button-outline" style="width: 100%; text-align: center; display: inline-flex; align-items: center; justify-content: center;">
+                Back to Student Profile
+            </a>
+
+        <?php endif; ?>
+
+    </section>
+</div>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>

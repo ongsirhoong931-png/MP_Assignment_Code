@@ -60,63 +60,64 @@ $pageTitle = 'View Student';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<h1>Student Profile</h1>
+<div style="max-width: 600px; margin: 0 auto;">
+    <div style="margin-bottom: 24px;">
+        <h1 style="margin: 0;">Student Profile</h1>
+        <p style="margin: 4px 0 0 0;">View student details and class enrolments.</p>
+    </div>
 
-<section class="panel">
+    <section class="panel" style="padding: 28px;">
+        <p style="margin-bottom: 12px;"><strong>Student ID:</strong><br><?= h($student['student_id']) ?></p>
 
-    <p><strong>Student ID:</strong>
-        <?= h($student['student_id']) ?></p>
+        <p style="margin-bottom: 12px;"><strong>Name:</strong><br><?= h($student['student_name']) ?></p>
 
-    <p><strong>Name:</strong>
-        <?= h($student['student_name']) ?></p>
+        <p style="margin-bottom: 12px;"><strong>Email:</strong><br><?= h($student['student_email'] ?? '-') ?></p>
 
-    <p><strong>Email:</strong>
-        <?= h($student['student_email']) ?></p>
+        <p style="margin-bottom: 12px;"><strong>Phone:</strong><br><?= h($student['student_phone_number'] ?? '-') ?></p>
 
-    <p><strong>Phone:</strong>
-        <?= h($student['student_phone_number']) ?></p>
+        <p style="margin-bottom: 12px;"><strong>Primary Class:</strong><br><?= h(!empty($student['grade_level']) ? $student['grade_level'] . ' - ' . $student['section'] : 'Not Assigned') ?></p>
 
-    <p><strong>Primary Class:</strong>
-        <?= h(!empty($student['grade_level']) ? $student['grade_level'] . ' - ' . $student['section'] : 'Not Assigned') ?></p>
+        <p style="margin-bottom: 12px;"><strong>Username:</strong><br><?= h($student['username'] ?? 'No Login Account') ?></p>
 
-    <p><strong>Username:</strong>
-        <?= h($student['username'] ?? 'No Login Account') ?></p>
+        <p style="margin-bottom: 20px;"><strong>Account Status:</strong><br>
+            <?php
+            if ($student['is_active'] === null) {
+                echo 'No Account';
+            } else {
+                echo $student['is_active'] ? 'Active' : 'Inactive';
+            }
+            ?>
+        </p>
 
-    <p><strong>Account Status:</strong>
-        <?php
-        if ($student['is_active'] === null) {
-            echo 'No Account';
-        } else {
-            echo $student['is_active'] ? 'Active' : 'Inactive';
-        }
-        ?>
-    </p>
+        <hr style="border: 0; border-top: 1px solid var(--line); margin: 20px 0;">
 
-    <h2>Enrolled Classes</h2>
+        <h3 style="margin-bottom: 12px;">Enrolled Classes</h3>
 
-    <?php if (!$enrolments): ?>
-        <p>No class enrolments found.</p>
-    <?php else: ?>
-        <ul>
-            <?php foreach ($enrolments as $class): ?>
-                <li>
-                    <?= h($class['class_id']) ?>
-                    - <?= h($class['grade_level'] . ' - ' . $class['section']) ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
+        <?php if (!$enrolments): ?>
+            <p style="margin-bottom: 20px;">No class enrolments found.</p>
+        <?php else: ?>
+            <ul style="margin-bottom: 24px; padding-left: 20px;">
+                <?php foreach ($enrolments as $class): ?>
+                    <li style="margin-bottom: 6px;">
+                        <?= h($class['class_id']) ?> - <?= h($class['grade_level'] . ' - ' . $class['section']) ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
 
-    <?php if (me()['role'] === 'admin'): ?>
-        <a class="button" href="<?= h(url(
-            'student_management/edit_student.php?id=' .
-            urlencode($id)
-        )) ?>">Edit Student</a>
-    <?php endif; ?>
+        <div style="display: flex; gap: 12px; align-items: center; margin-top: 24px;">
+            <?php if (me()['role'] === 'admin'): ?>
+                <a class="button" style="flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center;" href="<?= h(url(
+                    'student_management/edit_student.php?id=' .
+                    urlencode($id)
+                )) ?>">Edit Student</a>
+            <?php endif; ?>
 
-    <a href="<?= h(url('student_management/index.php')) ?>">
-        Back
-    </a>
-</section>
+            <a href="<?= h(url('student_management/index.php')) ?>" class="button button-outline" style="flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center;">
+                Back
+            </a>
+        </div>
+    </section>
+</div>
 
 <?php require __DIR__ . '/../includes/footer.php'; ?>
